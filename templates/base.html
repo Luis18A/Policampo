@@ -1,0 +1,67 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PoliCampo | Agroecología Jujuy{% endblock %}</title>
+    
+    <!-- Fuentes e Iconos -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Estilos de PoliCampo -->
+    <link rel="stylesheet" href="{% static 'css/policampo.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Barra Superior -->
+    <header class="navbar">
+        <div class="navbar-container">
+            <a href="{% url 'campos:pantalla_entrada' %}" class="brand-logo">
+                <span>🌱</span>
+                <span>PoliCampo</span>
+                <span class="brand-badge">Jujuy Agroecológico</span>
+            </a>
+            
+            <nav class="nav-links">
+                <a href="{% url 'campos:pantalla_entrada' %}" class="nav-link {% if request.resolver_match.url_name == 'pantalla_entrada' %}active{% endif %}">
+                    Inicio
+                </a>
+                <a href="{% url 'campos:establecimientos_lista' %}" class="nav-link {% if request.resolver_match.url_name == 'establecimientos_lista' %}active{% endif %}">
+                    Mis Establecimientos
+                </a>
+                <a href="{% url 'campos:establecimiento_crear' %}" class="btn btn-primary btn-sm">
+                    + Nuevo Predio
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Mensajes Flash de Django -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {% if message.tags == 'success' %}✅{% elif message.tags == 'error' or message.tags == 'danger' %}⚠️{% else %}ℹ️{% endif %}
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Contenido Principal -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Pie de Página -->
+    <footer class="footer">
+        <p><strong>PoliCampo</strong> &bull; Sistema de gestión territorial para pequeños productores agroecológicos de Jujuy.</p>
+        <p style="font-size: 0.8rem; margin-top: 0.35rem; color: #6b7280;">Valles Templados &bull; Quebrada de Humahuaca &bull; Yungas &bull; Puna</p>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

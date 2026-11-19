@@ -1,0 +1,155 @@
+/* ==========================================================================
+   POLICAMPO - Pantalla de Entrada (Bienvenida)
+   ========================================================================== */
+
+.welcome-section {
+    max-width: 1080px;
+    margin: 1.5rem auto 3rem;
+}
+
+.welcome-header {
+    margin-bottom: 2.5rem;
+}
+
+.welcome-title {
+    font-size: 2.35rem;
+    font-weight: 800;
+    color: var(--color-primary-dark);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    letter-spacing: -0.5px;
+    margin-bottom: 0.85rem;
+}
+
+.welcome-desc {
+    font-size: 1.12rem;
+    color: #4b5563;
+    line-height: 1.6;
+    max-width: 860px;
+}
+
+/* Grilla de 3 Tarjetas Grandes */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.75rem;
+}
+
+.welcome-card {
+    background-color: #ffffff;
+    border-radius: var(--radius-lg);
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.welcome-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 35px rgba(27, 67, 50, 0.12);
+    border-color: #cbd5e1;
+}
+
+.welcome-card-img-wrapper {
+    width: 100%;
+    height: 190px;
+    overflow: hidden;
+    background-color: #e5e7eb;
+}
+
+.welcome-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.welcome-card:hover .welcome-card-img {
+    transform: scale(1.04);
+}
+
+.welcome-card-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.welcome-card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.welcome-card-text {
+    font-size: 0.96rem;
+    color: #4b5563;
+    line-height: 1.55;
+    margin-bottom: 1.5rem;
+    flex: 1;
+}
+
+.welcome-card-action {
+    margin-top: auto;
+}
+
+.welcome-card-btn {
+    width: 100%;
+    background-color: var(--color-primary);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s ease, transform 0.15s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.welcome-card-btn:hover {
+    background-color: var(--color-primary-dark);
+    color: #ffffff;
+}
+
+/* Barra inferior si ya existen campos */
+.existing-farms-banner {
+    margin-top: 3rem;
+    background-color: #ffffff;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow-subtle);
+}
+
+.existing-farms-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Responsividad */
+@media (max-width: 960px) {
+    .cards-grid {
+        grid-template-columns: 1fr;
+        max-width: 480px;
+        margin: 0 auto;
+    }
+    .welcome-title {
+        font-size: 1.85rem;
+    }
+}

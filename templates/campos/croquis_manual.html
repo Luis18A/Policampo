@@ -1,0 +1,497 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dibujar mi Terreno | {{ establecimiento.nombre }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/editor_croquis.css' %}?v=2">
+<style>
+    .editor-quick-bar {
+        background-color: #ffffff;
+        border: 2px solid #2d6a4f;
+        border-radius: var(--radius-md);
+        padding: 0.85rem 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.85rem;
+        box-shadow: 0 4px 15px rgba(45, 106, 79, 0.08);
+    }
+
+    .pencil-guide-badge {
+        background-color: #f0fdf4;
+        border: 1.5px solid #86efac;
+        border-radius: var(--radius-sm);
+        padding: 0.65rem 1rem;
+        font-size: 0.88rem;
+        color: #166534;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="editor-container">
+    <!-- Encabezado con datos del predio -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                <a href="{% url 'campos:establecimiento_detalle' pk=establecimiento.pk %}" style="text-decoration: none; color: #6b7280; font-size: 0.9rem;">
+                    &larr; Ficha del Establecimiento
+                </a>
+                <span class="brand-badge" style="background-color: #ffedd5; color: #9a3412;">Opción B: Dibujar mi terreno</span>
+            </div>
+            <h1 style="color: var(--color-primary-dark); font-size: 1.85rem;">Croquis Manual: {{ establecimiento.nombre }}</h1>
+            <p style="color: #4b5563; font-size: 0.92rem;">
+                {{ establecimiento.localidad }}, {{ establecimiento.departamento }} &bull; Superficie total: <strong>{{ establecimiento.superficie_total_ha }} ha</strong>
+            </p>
+        </div>
+
+        <div style="display: flex; gap: 0.65rem; align-items: center; flex-wrap: wrap;">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-imprimir-manual" title="Imprimir croquis">
+                🖨️ Imprimir
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-exportar-png" title="Guardar como imagen PNG">
+                📷 Descargar Imagen
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" id="btn-guardar-manual" style="background-color: #2b8a3e; padding-left: 1.25rem; padding-right: 1.25rem;">
+                💾 Guardar Croquis y Parcelas
+            </button>
+        </div>
+    </div>
+
+    <!-- Barra Rápida de Dibujo con Lápiz y Cultivo Directo -->
+    <div class="editor-quick-bar">
+        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+            <!-- Herramienta Lápiz (Activa por defecto) -->
+            <button type="button" class="tool-btn active" id="tool-draw" title="Usá el lápiz para dibujar arrastrando en el lienzo">
+                <span style="font-size: 1.2rem;">✏️</span>
+                <span>Lápiz de Dibujo</span>
+            </button>
+
+            <!-- Herramienta Seleccionar/Mover -->
+            <button type="button" class="tool-btn" id="tool-select" title="Seleccionar para mover o redimensionar parcelas">
+                <span style="font-size: 1.1rem;">↖</span>
+                <span>Seleccionar / Mover</span>
+            </button>
+
+            <!-- Campo Directo de Cultivo para el Lápiz -->
+            <div class="crop-input-wrapper">
+                <label for="input-cultivo-rapido" style="font-weight: 800; font-size: 0.88rem; color: #166534;">
+                    🌱 Cultivo:
+                </label>
+                <input type="text" id="input-cultivo-rapido" class="crop-input-field" value="Papa" placeholder="Escribí el cultivo...">
+            </div>
+
+            <!-- Chips de Tipos de Uso y Cultivos Rápidos (color predefinido por tipo) -->
+            <div class="crop-chips-container">
+                <button type="button" class="crop-chip selected" data-crop="Papa" data-color="#2b8a3e" data-uso="cultivo_agricola">🌱 Cultivo (Papa)</button>
+                <button type="button" class="crop-chip" data-crop="Maíz" data-color="#2b8a3e" data-uso="cultivo_agricola">🌽 Maíz</button>
+                <button type="button" class="crop-chip" data-crop="Tomate" data-color="#2b8a3e" data-uso="cultivo_agricola">🍅 Tomate</button>
+                <button type="button" class="crop-chip" data-crop="Hortalizas" data-color="#2b8a3e" data-uso="cultivo_agricola">🥬 Hortalizas</button>
+                <button type="button" class="crop-chip" data-crop="Pastura" data-color="#fcc419" data-uso="pastura">🌾 Pastura</button>
+                <button type="button" class="crop-chip" data-crop="Acequia / Agua" data-color="#339af0" data-uso="agua">💧 Agua</button>
+                <button type="button" class="crop-chip" data-crop="Construcción" data-color="#ff922b" data-uso="construccion">🏠 Construcción</button>
+                <button type="button" class="crop-chip" data-crop="Camino" data-color="#d4a76a" data-uso="camino">🛤️ Camino</button>
+                <button type="button" class="crop-chip" data-crop="Sin cultivar" data-color="#94a3b8" data-uso="sin_cultivar">⬜ Sin cultivar</button>
+            </div>
+        </div>
+
+        <!-- Color del Lápiz y Guardado -->
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div style="display: flex; align-items: center; gap: 0.35rem;">
+                <span style="font-size: 0.8rem; font-weight: 700; color: #64748b;">Color:</span>
+                <div class="color-picker-group" id="pencil-colors">
+                    {% for hex, nombre in colores %}
+                    <button type="button" class="color-option-btn {% if forloop.first %}selected{% endif %}" 
+                            data-color="{{ hex }}" title="{{ nombre }}" 
+                            style="background-color: {{ hex }}; width: 26px; height: 26px;"></button>
+                    {% endfor %}
+                </div>
+            </div>
+            <span id="save-status-msg" style="font-size: 0.85rem; font-weight: 700; color: #059669;"></span>
+        </div>
+    </div>
+
+    <!-- Guía del Lápiz -->
+    <div class="pencil-guide-badge">
+        <span style="font-size: 1.2rem;">👉</span>
+        <span>
+            <strong>El lápiz ✏️ está listo:</strong> Tenés seleccionado el cultivo <strong><span id="label-cultivo-activo">Papa</span></strong>. Simplemente <strong>hacé clic y arrastrá dentro del marco verde</strong> para dibujar tu parcela. ¡Podés dibujar todas las parcelas que necesites seguidas!
+        </span>
+    </div>
+
+    <!-- Métricas en tiempo real -->
+    <div class="metrics-strip" style="margin-bottom: 0.5rem;">
+        <div class="metric-box">
+            <span class="metric-title">Superficie Total Predio</span>
+            <span class="metric-val">{{ establecimiento.superficie_total_ha|floatformat:4 }} <small style="font-size: 1rem;">ha</small></span>
+            <span class="metric-sub">{{ establecimiento.superficie_total_m2|floatformat:0 }} m²</span>
+        </div>
+
+        <div class="metric-box">
+            <span class="metric-title">Parcelas en el Croquis</span>
+            <span class="metric-val" id="metric-total-parcelas" style="color: #2b8a3e;">0</span>
+            <span class="metric-sub">sectores delimitados</span>
+        </div>
+
+        <div class="metric-box">
+            <span class="metric-title">Superficie Declarada</span>
+            <span class="metric-val" id="metric-sup-declarada" style="color: #2d6a4f;">0.00 <small style="font-size: 1rem;">ha</small></span>
+            <span class="metric-sub">suma de parcelas con hectáreas</span>
+        </div>
+
+        <div class="metric-box">
+            <span class="metric-title">Superficie Restante</span>
+            <span class="metric-val" id="metric-sup-restante">{{ establecimiento.superficie_total_ha|floatformat:2 }} <small style="font-size: 1rem;">ha</small></span>
+            <span class="metric-sub">disponible según datos</span>
+        </div>
+    </div>
+
+    <!-- Área de Trabajo: Canvas + Inspector Lateral -->
+    <div class="editor-workspace">
+        <!-- Canvas Viewport -->
+        <div class="canvas-wrapper">
+            <div class="canvas-header">
+                <span>✏️ <strong>Lienzo de Dibujo Libre:</strong> Arrastrá el lápiz para delimitar parcelas. Clic en una parcela para moverla o redimensionarla.</span>
+                <span id="canvas-status-tip" style="color: #047857; font-weight: 700;">✏️ Lápiz listo para dibujar: Papa</span>
+            </div>
+
+            <div class="canvas-viewport" id="viewport">
+                <canvas id="editorCanvas"></canvas>
+            </div>
+        </div>
+
+        <!-- Inspector Lateral: Propiedades de la Parcela Seleccionada -->
+        <div class="editor-sidebar">
+            <div class="card" style="padding: 1.15rem; box-shadow: none; border: 1.5px solid #e2e8f0;">
+                <div class="sidebar-section-title">
+                    <span>🌱</span>
+                    <span>Información de la Parcela</span>
+                </div>
+
+                <div id="prop-empty" style="text-align: center; padding: 2rem 0.5rem; color: #64748b; font-size: 0.88rem;">
+                    <span style="font-size: 2.5rem; display: block; margin-bottom: 0.5rem;">✏️</span>
+                    Dibujá una parcela en el mapa o hacé clic sobre una ya dibujada para ver sus datos, cambiar cultivo o agregar hectáreas.
+                </div>
+
+                <div id="prop-form" style="display: none; flex-direction: column; gap: 0.85rem;">
+                    <!-- Nombre de la Parcela -->
+                    <div class="form-group">
+                        <label class="form-label" style="font-size: 0.82rem;">Nombre del sector o parcela *</label>
+                        <input type="text" id="prop-nombre" class="form-input" placeholder="Ej: Parcela Norte, Huerta...">
+                    </div>
+
+                    <!-- Tipo de Uso -->
+                    <div class="form-group">
+                        <label class="form-label" style="font-size: 0.82rem;">Tipo de Uso *</label>
+                        <select id="prop-uso" class="form-select">
+                            {% for val, label in tipos_uso %}
+                            <option value="{{ val }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Cultivo -->
+                    <div class="form-group">
+                        <label class="form-label" style="font-size: 0.82rem;">Cultivo o especie sembrada</label>
+                        <input type="text" id="prop-cultivo" class="form-input" placeholder="Ej: Papa, Maíz morado...">
+                    </div>
+
+                    <!-- Superficie en Hectáreas (Opcional, cuando el productor conoce el dato) -->
+                    <div class="form-group">
+                        <label class="form-label" style="font-size: 0.82rem;">
+                            Superficie en Hectáreas (Opcional)
+                        </label>
+                        <input type="number" id="prop-superficie" class="form-input" step="0.0001" min="0.0001" placeholder="Ej: 0.75 (si conocés el dato)">
+                        <span class="form-help">Ingresá este dato si lo conocés.</span>
+                    </div>
+
+                    <!-- Color de la parcela -->
+                    <div class="form-group">
+                        <label class="form-label" style="font-size: 0.82rem;">Color de la parcela</label>
+                        <div class="color-picker-group" id="editor-colors">
+                            {% for hex, nombre in colores %}
+                            <button type="button" class="color-option-btn" data-color="{{ hex }}" title="{{ nombre }}" style="background-color: {{ hex }}; width: 28px; height: 28px;"></button>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                        <button type="button" id="btn-eliminar-panel" class="btn btn-danger btn-sm" style="width: 100%;">
+                            🗑️ Eliminar esta parcela
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen de integración para Proceso -->
+            <div style="background-color: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: var(--radius-sm); padding: 0.85rem; font-size: 0.82rem; color: #475569;">
+                <strong>🔗 Integración Proceso:</strong> Al presionar <em>"Guardar Croquis y Parcelas"</em>, cada sector se guarda en la base de datos de PoliCampo, haciéndolo compatible de inmediato con el futuro módulo <strong>Proceso</strong>.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/editor_croquis.js' %}?v=2"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rawParcelas = {{ parcelas_json|safe }};
+    const supTotalHa = {{ sup_total_ha_json|safe }};
+    const largoTotalM = {{ largo_total_m_json|safe }};
+    const anchoTotalM = {{ ancho_total_m_json|safe }};
+
+    const inputCultivoRapido = document.getElementById('input-cultivo-rapido');
+    const labelCultivoActivo = document.getElementById('label-cultivo-activo');
+    const tipText = document.getElementById('canvas-status-tip');
+    const btnSelect = document.getElementById('tool-select');
+    const btnDraw = document.getElementById('tool-draw');
+    const cropChips = document.querySelectorAll('.crop-chip');
+
+    function highlightPencilColor(hex) {
+        document.querySelectorAll('#pencil-colors .color-option-btn').forEach(b => {
+            if (b.dataset.color.toLowerCase() === (hex || '').toLowerCase()) {
+                b.classList.add('selected');
+            } else {
+                b.classList.remove('selected');
+            }
+        });
+    }
+
+    // Inicializar editor con modo LÁPIZ activo por defecto y medidas reales del campo
+    const editor = new CroquisManualLibre('editorCanvas', {
+        parcelas: Array.isArray(rawParcelas) ? rawParcelas : [],
+        supTotalHa: supTotalHa,
+        largoTotalM: largoTotalM,
+        anchoTotalM: anchoTotalM,
+        defaultCrop: inputCultivoRapido.value || 'Papa',
+        defaultTipoUso: 'cultivo_agricola',
+        onSelectParcela: function(p) {
+            const propEmpty = document.getElementById('prop-empty');
+            const propForm = document.getElementById('prop-form');
+
+            if (!p) {
+                if (propEmpty) propEmpty.style.display = 'block';
+                if (propForm) propForm.style.display = 'none';
+                return;
+            }
+
+            if (propEmpty) propEmpty.style.display = 'none';
+            if (propForm) propForm.style.display = 'flex';
+
+            document.getElementById('prop-nombre').value = p.nombre || '';
+            document.getElementById('prop-uso').value = p.tipo_uso || 'cultivo_agricola';
+            document.getElementById('prop-cultivo').value = p.cultivo || '';
+            document.getElementById('prop-superficie').value = (p.superficie_ha !== null && p.superficie_ha !== undefined) ? p.superficie_ha : '';
+
+            // Resaltar color en selector lateral
+            document.querySelectorAll('#editor-colors .color-option-btn').forEach(b => {
+                if (b.dataset.color.toLowerCase() === (p.color || '').toLowerCase()) {
+                    b.classList.add('selected');
+                } else {
+                    b.classList.remove('selected');
+                }
+            });
+        },
+        onResumenUpdate: function(resumen) {
+            document.getElementById('metric-total-parcelas').textContent = resumen.totalParcelas;
+            document.getElementById('metric-sup-declarada').innerHTML = `${resumen.superficieDeclaradaHa.toFixed(2)} <small style="font-size: 1rem;">ha</small>`;
+            const restante = Math.max(0, supTotalHa - resumen.superficieDeclaradaHa);
+            document.getElementById('metric-sup-restante').innerHTML = `${restante.toFixed(2)} <small style="font-size: 1rem;">ha</small>`;
+        }
+    });
+
+    // Sincronizar cultivo activo inicial con el color predefinido de cultivo agrícola (#2b8a3e)
+    editor.setActiveCrop(inputCultivoRapido.value || 'Papa', 'cultivo_agricola', '#2b8a3e');
+    highlightPencilColor('#2b8a3e');
+
+    // Manejar cambio en el input de cultivo
+    inputCultivoRapido.addEventListener('input', function() {
+        const val = this.value.trim() || 'Cultivo';
+        const tipoUso = editor.inferirTipoUso(val);
+        const colorAuto = getColorPorTipoUso(tipoUso);
+        editor.setActiveCrop(val, tipoUso, colorAuto);
+        highlightPencilColor(colorAuto);
+        labelCultivoActivo.textContent = val;
+        tipText.textContent = `✏️ Lápiz listo para dibujar: ${val}`;
+        tipText.style.color = '#047857';
+        btnDraw.classList.add('active');
+        btnSelect.classList.remove('active');
+
+        cropChips.forEach(c => c.classList.remove('selected'));
+    });
+
+    // Chips de tipo de uso / cultivo de 1 toque
+    cropChips.forEach(chip => {
+        chip.addEventListener('click', function() {
+            cropChips.forEach(c => c.classList.remove('selected'));
+            this.classList.add('selected');
+            const crop = this.dataset.crop;
+            const tipoUso = this.dataset.uso || editor.inferirTipoUso(crop);
+            const color = this.dataset.color || getColorPorTipoUso(tipoUso);
+
+            inputCultivoRapido.value = crop;
+            labelCultivoActivo.textContent = crop;
+            tipText.textContent = `✏️ Lápiz listo para dibujar: ${crop}`;
+            tipText.style.color = '#047857';
+
+            editor.setActiveCrop(crop, tipoUso, color);
+            highlightPencilColor(color);
+
+            btnDraw.classList.add('active');
+            btnSelect.classList.remove('active');
+        });
+    });
+
+    // Selector de color del lápiz
+    document.querySelectorAll('#pencil-colors .color-option-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('#pencil-colors .color-option-btn').forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            editor.setActiveColor(this.dataset.color);
+        });
+    });
+
+    // Botones de Herramientas
+    btnDraw.addEventListener('click', function() {
+        btnDraw.classList.add('active');
+        btnSelect.classList.remove('active');
+        const crop = inputCultivoRapido.value.trim() || 'Cultivo';
+        editor.setMode('draw');
+        tipText.textContent = `✏️ Lápiz listo para dibujar: ${crop}`;
+    });
+
+    btnSelect.addEventListener('click', function() {
+        btnSelect.classList.add('active');
+        btnDraw.classList.remove('active');
+        editor.setMode('select');
+        tipText.textContent = 'Modo Selección activo: Arrastrá parcelas para moverlas o usá los tiradores para cambiar tamaño.';
+    });
+
+    // Borrado de parcela seleccionada
+    document.getElementById('btn-eliminar-panel').addEventListener('click', function() {
+        if (confirm('¿Eliminar esta parcela del croquis?')) {
+            editor.deleteSelected();
+        }
+    });
+
+    // Edición reactiva desde el panel lateral
+    document.getElementById('prop-nombre').addEventListener('input', function() {
+        if (editor.selectedParcela) {
+            editor.selectedParcela.nombre = this.value;
+            editor.render();
+        }
+    });
+    document.getElementById('prop-uso').addEventListener('change', function() {
+        if (editor.selectedParcela) {
+            editor.selectedParcela.tipo_uso = this.value;
+            const nuevoColor = getColorPorTipoUso(this.value);
+            editor.selectedParcela.color = nuevoColor;
+            document.querySelectorAll('#editor-colors .color-option-btn').forEach(b => {
+                b.classList.toggle('selected', b.dataset.color.toLowerCase() === nuevoColor.toLowerCase());
+            });
+            editor.render();
+        }
+    });
+    document.getElementById('prop-cultivo').addEventListener('input', function() {
+        if (editor.selectedParcela) {
+            editor.selectedParcela.cultivo = this.value;
+            editor.render();
+        }
+    });
+    document.getElementById('prop-superficie').addEventListener('input', function() {
+        if (editor.selectedParcela) {
+            const val = parseFloat(this.value);
+            editor.selectedParcela.superficie_ha = (!isNaN(val) && val > 0) ? val : null;
+            editor.render();
+            editor.updateResumen();
+        }
+    });
+
+    // Colores desde el panel lateral
+    document.querySelectorAll('#editor-colors .color-option-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('#editor-colors .color-option-btn').forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            if (editor.selectedParcela) {
+                editor.selectedParcela.color = this.dataset.color;
+                editor.render();
+            }
+        });
+    });
+
+    // Guardar croquis en SQLite vía AJAX
+    const btnGuardar = document.getElementById('btn-guardar-manual');
+    const statusMsg = document.getElementById('save-status-msg');
+    btnGuardar.addEventListener('click', function() {
+        btnGuardar.disabled = true;
+        btnGuardar.textContent = 'Guardando...';
+        statusMsg.textContent = '';
+
+        const payload = {
+            parcelas: editor.parcelas.map(p => ({
+                id: p.id,
+                nombre: p.nombre,
+                tipo_uso: p.tipo_uso,
+                cultivo: p.cultivo,
+                superficie_ha: p.superficie_ha,
+                color: p.color,
+                x: p.x,
+                y: p.y,
+                w: p.w,
+                h: p.h
+            }))
+        };
+
+        fetch("{% url 'campos:croquis_manual_guardar' pk=establecimiento.pk %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            btnGuardar.disabled = false;
+            btnGuardar.textContent = '💾 Guardar Croquis y Parcelas';
+            if (data.status === 'ok') {
+                if (Array.isArray(data.parcelas_ids) && data.parcelas_ids.length === editor.parcelas.length) {
+                    editor.parcelas.forEach((p, idx) => { p.id = data.parcelas_ids[idx]; });
+                }
+                statusMsg.textContent = `✓ Guardado (${data.total_parcelas} parcelas)`;
+                setTimeout(() => { statusMsg.textContent = ''; }, 4500);
+            } else {
+                alert('Error al guardar: ' + data.mensaje);
+            }
+        })
+        .catch(err => {
+            btnGuardar.disabled = false;
+            btnGuardar.textContent = '💾 Guardar Croquis y Parcelas';
+            alert('Error de conexión al guardar el croquis.');
+        });
+    });
+
+    // Exportar Imagen PNG
+    document.getElementById('btn-exportar-png').addEventListener('click', function() {
+        const canvas = document.getElementById('editorCanvas');
+        const link = document.createElement('a');
+        link.download = `croquis_{{ establecimiento.nombre|slugify }}.png`;
+        link.href = canvas.toDataURL('image/png');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+
+    // Imprimir
+    document.getElementById('btn-imprimir-manual').addEventListener('click', function() {
+        window.print();
+    });
+});
+</script>
+{% endblock %}

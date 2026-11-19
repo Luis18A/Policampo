@@ -1,0 +1,417 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cuestionario de Parcelas | {{ establecimiento.nombre }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/cuestionario.css' %}">
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1140px; margin: 0 auto;">
+    <!-- Encabezado con datos del predio -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                <a href="{% url 'campos:establecimiento_detalle' pk=establecimiento.pk %}" style="text-decoration: none; color: #6b7280; font-size: 0.9rem;">
+                    &larr; Ficha del Predio
+                </a>
+                <span class="brand-badge">{{ establecimiento.localidad }}, {{ establecimiento.departamento }}</span>
+                <span class="brand-badge" style="background-color: #fef3c7; color: #92400e;">{{ establecimiento.ecorregion }}</span>
+            </div>
+            <h1 style="color: var(--color-primary-dark);">{{ establecimiento.nombre }}</h1>
+            <p style="color: #4b5563;">
+                Cultivo principal: <strong>{{ establecimiento.cultivo_principal }}</strong> &bull; 
+                Agua: <strong>{{ establecimiento.disponibilidad_agua }}</strong>
+            </p>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; align-items: center;">
+            <a href="{% url 'campos:croquis_automatico' pk=establecimiento.pk %}" class="btn btn-primary" style="background-color: var(--croquis-verde); box-shadow: 0 4px 14px rgba(43, 138, 62, 0.3);">
+                🌱 Generar croquis automático &rarr;
+            </a>
+        </div>
+    </div>
+
+    <!-- Barra de Métricas de Superficie (Requisito 4) -->
+    <div class="metrics-strip">
+        <div class="metric-box">
+            <span class="metric-title">Superficie Total Predio</span>
+            <span class="metric-val">{{ superficie_total|floatformat:4 }} <small style="font-size: 1rem; font-weight: 600;">ha</small></span>
+            <span class="metric-sub">{{ establecimiento.superficie_total_m2|floatformat:0 }} m²</span>
+        </div>
+
+        <div class="metric-box">
+            <span class="metric-title">Superficie Distribuida</span>
+            <span class="metric-val" style="color: #2b8a3e;">{{ superficie_distribuida|floatformat:4 }} <small style="font-size: 1rem; font-weight: 600;">ha</small></span>
+            <span class="metric-sub">{{ establecimiento.superficie_distribuida_m2|floatformat:0 }} m² en {{ parcelas.count }} parcela{{ parcelas.count|pluralize:"s" }}</span>
+        </div>
+
+        <div class="metric-box">
+            <span class="metric-title">Superficie Restante</span>
+            <span class="metric-val" style="color: {% if superficie_restante > 0 %}#2d6a4f{% else %}#6b7280{% endif %};">
+                {{ superficie_restante|floatformat:4 }} <small style="font-size: 1rem; font-weight: 600;">ha</small>
+            </span>
+            <span class="metric-sub">{{ establecimiento.superficie_restante_m2|floatformat:0 }} m² disponible{{ superficie_restante|pluralize:"s" }}</span>
+        </div>
+
+        <div class="metric-box">
+            <span class="metric-title">Porcentaje Utilizado</span>
+            <span class="metric-val" style="color: {% if porcentaje_utilizado > 99.9 %}#c92a2a{% else %}#2b8a3e{% endif %};">
+                {{ porcentaje_utilizado }}%
+            </span>
+            <span class="metric-sub">del terreno asignado</span>
+        </div>
+    </div>
+
+    <!-- Barra Visual de Progreso -->
+    <div class="progress-wrapper">
+        <div class="progress-header">
+            <span>Ocupación de la superficie del campo</span>
+            <span><strong>{{ superficie_distribuida|floatformat:2 }} ha</strong> de <strong>{{ superficie_total|floatformat:2 }} ha</strong> ({{ porcentaje_utilizado }}%)</span>
+        </div>
+        <div class="progress-track">
+            <div class="progress-fill {% if porcentaje_utilizado >= 100 %}warning{% endif %}" 
+                 style="width: {{ porcentaje_utilizado }}%; max-width: 100%;"></div>
+        </div>
+    </div>
+
+    <!-- Layout en 2 Columnas: Formulario a la izquierda, Listado a la derecha -->
+    <div class="cuestionario-layout">
+        <!-- Columna 1: Formulario para Agregar Parcela -->
+        <div class="card" style="border-top: 4px solid var(--color-primary);">
+            <h2 style="font-size: 1.25rem; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.5rem;">
+                <span>➕</span>
+                <span>Registrar nueva parcela</span>
+            </h2>
+            <p style="font-size: 0.88rem; color: #6b7280; margin-bottom: 1.25rem;">
+                Ingresá cada sector de tu terreno (cultivo, pastura, camino, agua o vivienda).
+            </p>
+
+            <form method="post" id="form-parcela" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger" style="margin-bottom: 1rem; padding: 0.75rem;">
+                    {% for err in form.non_field_errors %}
+                    <p>{{ err }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <!-- Nombre de la parcela -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.nombre.id_for_label }}">
+                            Nombre o sector de la parcela *
+                        </label>
+                        {{ form.nombre }}
+                        {% if form.nombre.errors %}
+                        <span class="form-error">{{ form.nombre.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Tipo de uso -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.tipo_uso.id_for_label }}">
+                            Tipo de uso *
+                        </label>
+                        {{ form.tipo_uso }}
+                        {% if form.tipo_uso.errors %}
+                        <span class="form-error">{{ form.tipo_uso.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Nombre del cultivo -->
+                    <div class="form-group" id="group-cultivo">
+                        <label class="form-label" for="{{ form.cultivo.id_for_label }}">
+                            Nombre del cultivo / especie
+                        </label>
+                        {{ form.cultivo }}
+                        {% if form.cultivo.errors %}
+                        <span class="form-error">{{ form.cultivo.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Superficie en hectáreas -->
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <label class="form-label" for="{{ form.superficie_ha.id_for_label }}">
+                                Superficie (en Hectáreas) *
+                            </label>
+                            <span style="font-size: 0.78rem; color: #2d6a4f; font-weight: 600;">
+                                Disponible: {{ superficie_restante|floatformat:4 }} ha
+                            </span>
+                        </div>
+                        {{ form.superficie_ha }}
+                        <span class="form-help" id="m2-equivalente-helper">Equivalente: 0 m²</span>
+                        {% if form.superficie_ha.errors %}
+                        <span class="form-error">{{ form.superficie_ha.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Ubicación Relativa con Cuadrícula Visual 3x3 -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            Ubicación relativa en el terreno *
+                        </label>
+                        <span class="form-help" style="margin-bottom: 0.35rem;">
+                            Tocá el cuadrante donde se ubica esta parcela dentro de tu campo:
+                        </span>
+                        
+                        <!-- Dropdown real oculto sincronizado -->
+                        <div style="display: none;">
+                            {{ form.ubicacion_relativa }}
+                        </div>
+
+                        <!-- Selector Visual 3x3 -->
+                        <div class="relative-grid-selector" id="grid-selector">
+                            <button type="button" class="grid-cell-btn" data-val="arriba_izquierda">
+                                <span>↖</span> Arriba Izq
+                            </button>
+                            <button type="button" class="grid-cell-btn" data-val="arriba_centro">
+                                <span>↑</span> Arriba Centro
+                            </button>
+                            <button type="button" class="grid-cell-btn" data-val="arriba_derecha">
+                                <span>↗</span> Arriba Der
+                            </button>
+
+                            <button type="button" class="grid-cell-btn" data-val="centro_izquierda">
+                                <span>←</span> Centro Izq
+                            </button>
+                            <button type="button" class="grid-cell-btn selected" data-val="centro">
+                                <span>🎯</span> Centro
+                            </button>
+                            <button type="button" class="grid-cell-btn" data-val="centro_derecha">
+                                <span>→</span> Centro Der
+                            </button>
+
+                            <button type="button" class="grid-cell-btn" data-val="abajo_izquierda">
+                                <span>↙</span> Abajo Izq
+                            </button>
+                            <button type="button" class="grid-cell-btn" data-val="abajo_centro">
+                                <span>↓</span> Abajo Centro
+                            </button>
+                            <button type="button" class="grid-cell-btn" data-val="abajo_derecha">
+                                <span>↘</span> Abajo Der
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Color de Parcela (8 Colores Requeridos) -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            Color representativo en el croquis
+                        </label>
+                        {{ form.color_hex }}
+                        <div class="color-picker-group" id="color-picker">
+                            {% for hex, nombre in colores %}
+                            <button type="button" 
+                                    class="color-option-btn {% if forloop.first %}selected{% endif %}" 
+                                    data-color="{{ hex }}" 
+                                    title="{{ nombre }}" 
+                                    style="background-color: {{ hex }};"></button>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Observaciones -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.observaciones.id_for_label }}">
+                            Observaciones (Opcional)
+                        </label>
+                        {{ form.observaciones }}
+                    </div>
+
+                    <!-- Botones de Envío -->
+                    <div style="display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem;">
+                        <button type="submit" name="guardar_y_ver_croquis" value="1" class="btn btn-primary" style="width: 100%; background-color: var(--croquis-verde);">
+                            🌱 Guardar y generar croquis inmediato &rarr;
+                        </button>
+                        <button type="submit" class="btn btn-secondary" style="width: 100%;">
+                            + Guardar y seguir agregando parcelas
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Columna 2: Listado de Parcelas Registradas -->
+        <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 style="font-size: 1.35rem; color: var(--color-primary-dark);">
+                    Parcelas Registradas ({{ parcelas.count }})
+                </h2>
+                {% if parcelas %}
+                <a href="{% url 'campos:croquis_automatico' pk=establecimiento.pk %}" class="btn btn-secondary btn-sm">
+                    Ver croquis &rarr;
+                </a>
+                {% endif %}
+            </div>
+
+            {% if parcelas %}
+            <div class="parcelas-list">
+                {% for p in parcelas %}
+                <div class="parcela-item-card" style="border-left-color: {{ p.color_hex }};">
+                    <div class="parcela-item-details">
+                        <div class="parcela-item-title">
+                            <span style="display: inline-block; width: 14px; height: 14px; border-radius: 50%; background-color: {{ p.color_hex }};"></span>
+                            <span>{{ p.nombre }}</span>
+                            {% if p.cultivo %}
+                            <span style="font-weight: 500; font-size: 0.9rem; color: #4b5563;">&bull; {{ p.cultivo }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="parcela-item-meta">
+                            <span class="parcela-badge">{{ p.get_tipo_uso_display }}</span>
+                            <span class="parcela-badge">📍 {{ p.get_ubicacion_relativa_display }}</span>
+                            <span><strong>{{ p.superficie_ha|floatformat:4 }} ha</strong> ({{ p.superficie_m2|floatformat:0 }} m²)</span>
+                        </div>
+                        {% if p.observaciones %}
+                        <p style="font-size: 0.82rem; color: #6b7280; margin-top: 0.25rem;">
+                            📝 {{ p.observaciones }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <div class="parcela-item-actions">
+                        <a href="{% url 'campos:parcela_editar' pk=establecimiento.pk parcela_id=p.pk %}" 
+                           class="btn btn-secondary btn-sm" 
+                           title="Editar parcela">
+                            ✏️ Editar
+                        </a>
+                        <form method="post" action="{% url 'campos:parcela_eliminar' pk=establecimiento.pk parcela_id=p.pk %}" 
+                              onsubmit="return confirm('¿Eliminar la parcela {{ p.nombre }}?');" 
+                              style="margin: 0;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm" title="Eliminar parcela">
+                                🗑️
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div style="margin-top: 2rem; background-color: #ecfdf5; border: 1.5px solid #a7f3d0; border-radius: var(--radius-md); padding: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                <div>
+                    <h3 style="color: #065f46; font-size: 1.1rem; margin-bottom: 0.25rem;">¿Terminaste de cargar tus parcelas?</h3>
+                    <p style="font-size: 0.88rem; color: #047857; margin: 0;">Generá la representación visual con la distribución de tu establecimiento.</p>
+                </div>
+                <a href="{% url 'campos:croquis_automatico' pk=establecimiento.pk %}" class="btn btn-primary" style="background-color: var(--croquis-verde); padding: 0.85rem 1.5rem;">
+                    🌱 Generar croquis automático &rarr;
+                </a>
+            </div>
+
+            {% else %}
+            <!-- Estado vacío cuando no hay parcelas registradas -->
+            <div class="card" style="text-align: center; padding: 3rem 1.5rem; border: 2px dashed #d1d5db; background-color: #fafbfa;">
+                <span style="font-size: 3rem; display: block; margin-bottom: 0.75rem;">🌾</span>
+                <h3 style="color: var(--color-primary-dark); margin-bottom: 0.5rem;">Aún no agregaste parcelas</h3>
+                <p style="color: #6b7280; max-width: 440px; margin: 0 auto 1.5rem; font-size: 0.95rem;">
+                    Utilizá el formulario de la izquierda para registrar el primer sector o cultivo de tu terreno (ej: huerta, maíz, acequia, etc.).
+                </p>
+                <div style="display: inline-block; background-color: #f1f5f9; padding: 0.5rem 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; color: #475569;">
+                    Tenés <strong>{{ superficie_total }} hectáreas</strong> disponibles para distribuir.
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Sincronizar cuadrícula 3x3 con select
+    const selectUbicacion = document.getElementById('id_ubicacion_relativa');
+    const gridBtns = document.querySelectorAll('.grid-cell-btn');
+
+    if (selectUbicacion && gridBtns.length) {
+        // Inicializar según select
+        const initialVal = selectUbicacion.value || 'centro';
+        gridBtns.forEach(btn => {
+            if (btn.dataset.val === initialVal) {
+                btn.classList.add('selected');
+            } else {
+                btn.classList.remove('selected');
+            }
+            btn.addEventListener('click', function() {
+                gridBtns.forEach(b => b.classList.remove('selected'));
+                this.classList.add('selected');
+                selectUbicacion.value = this.dataset.val;
+            });
+        });
+    }
+
+    // 2. Selector de colores con color predefinido por Tipo de Uso
+    const COLORES_POR_TIPO_USO = {
+        'cultivo_agricola': '#2b8a3e',
+        'pastura':          '#fcc419',
+        'agua':             '#339af0',
+        'construccion':     '#ff922b',
+        'camino':           '#d4a76a',
+        'sin_cultivar':     '#94a3b8',
+        'otro':             '#845ef7',
+    };
+    const selectTipoUso = document.getElementById('id_tipo_uso');
+    const inputColor = document.getElementById('id_color_hex');
+    const colorBtns = document.querySelectorAll('.color-option-btn');
+
+    function setColorSeleccionado(hex) {
+        if (!inputColor) return;
+        inputColor.value = hex;
+        colorBtns.forEach(b => {
+            if (b.dataset.color.toLowerCase() === (hex || '').toLowerCase()) {
+                b.classList.add('selected');
+            } else {
+                b.classList.remove('selected');
+            }
+        });
+    }
+
+    if (inputColor && colorBtns.length) {
+        if (!inputColor.value) {
+            const colorInicial = (selectTipoUso && COLORES_POR_TIPO_USO[selectTipoUso.value]) || colorBtns[0].dataset.color;
+            setColorSeleccionado(colorInicial);
+        } else {
+            setColorSeleccionado(inputColor.value);
+        }
+
+        colorBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                setColorSeleccionado(this.dataset.color);
+            });
+        });
+
+        if (selectTipoUso) {
+            selectTipoUso.addEventListener('change', function() {
+                const colorSugerido = COLORES_POR_TIPO_USO[this.value];
+                if (colorSugerido) {
+                    setColorSeleccionado(colorSugerido);
+                }
+            });
+        }
+    }
+
+    // 3. Cálculo de hectáreas a metros cuadrados en tiempo real
+    const inputHa = document.getElementById('id_superficie_ha');
+    const helperM2 = document.getElementById('m2-equivalente-helper');
+    if (inputHa && helperM2) {
+        function updateM2() {
+            const val = parseFloat(inputHa.value);
+            if (!isNaN(val) && val > 0) {
+                const m2 = val * 10000;
+                helperM2.textContent = `Equivalente: ${m2.toLocaleString('es-AR')} m²`;
+                helperM2.style.color = '#2d6a4f';
+            } else {
+                helperM2.textContent = 'Equivalente: 0 m²';
+                helperM2.style.color = '#6b7280';
+            }
+        }
+        inputHa.addEventListener('input', updateM2);
+        updateM2();
+    }
+});
+</script>
+{% endblock %}

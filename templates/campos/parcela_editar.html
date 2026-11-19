@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Editar Parcela {{ parcela.nombre }} | PoliCampo{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/cuestionario.css' %}">
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 650px; margin: 0 auto;">
+    <div style="margin-bottom: 1.5rem;">
+        <a href="{% url 'campos:parcelas_cuestionario' pk=establecimiento.pk %}" style="text-decoration: none; color: #6b7280; font-size: 0.9rem;">
+            &larr; Volver al cuestionario de parcelas
+        </a>
+        <h1 style="color: var(--color-primary-dark); margin-top: 0.5rem;">Editar Parcela: {{ parcela.nombre }}</h1>
+        <p style="color: #4b5563;">Establecimiento: <strong>{{ establecimiento.nombre }}</strong> (Superficie total: {{ establecimiento.superficie_total_ha }} ha)</p>
+    </div>
+
+    <div class="card" style="border-top: 4px solid {{ parcela.color_hex }};">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for err in form.non_field_errors %}
+                <p>{{ err }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.nombre.id_for_label }}">
+                        Nombre de la parcela *
+                    </label>
+                    {{ form.nombre }}
+                    {% if form.nombre.errors %}
+                    <span class="form-error">{{ form.nombre.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.tipo_uso.id_for_label }}">
+                        Tipo de uso *
+                    </label>
+                    {{ form.tipo_uso }}
+                    {% if form.tipo_uso.errors %}
+                    <span class="form-error">{{ form.tipo_uso.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.cultivo.id_for_label }}">
+                        Nombre del cultivo / especie
+                    </label>
+                    {{ form.cultivo }}
+                    {% if form.cultivo.errors %}
+                    <span class="form-error">{{ form.cultivo.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.superficie_ha.id_for_label }}">
+                        Superficie (hectáreas) *
+                    </label>
+                    {{ form.superficie_ha }}
+                    <span class="form-help" id="m2-helper">1 ha = 10.000 m²</span>
+                    {% if form.superficie_ha.errors %}
+                    <span class="form-error">{{ form.superficie_ha.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Ubicación relativa</label>
+                    {{ form.ubicacion_relativa }}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Color representativo</label>
+                    {{ form.color_hex }}
+                    <div class="color-picker-group">
+                        {% for hex, nombre in colores %}
+                        <button type="button" 
+                                class="color-option-btn {% if parcela.color_hex == hex %}selected{% endif %}" 
+                                data-color="{{ hex }}" 
+                                title="{{ nombre }}" 
+                                style="background-color: {{ hex }};"></button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.observaciones.id_for_label }}">
+                        Observaciones
+                    </label>
+                    {{ form.observaciones }}
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                    <a href="{% url 'campos:parcelas_cuestionario' pk=establecimiento.pk %}" class="btn btn-secondary">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        Actualizar Parcela
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const inputColor = document.getElementById('id_color_hex');
+    const colorBtns = document.querySelectorAll('.color-option-btn');
+    if (inputColor && colorBtns.length) {
+        colorBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                colorBtns.forEach(b => b.classList.remove('selected'));
+                this.classList.add('selected');
+                inputColor.value = this.dataset.color;
+            });
+        });
+    }
+
+    const inputHa = document.getElementById('id_superficie_ha');
+    const helperM2 = document.getElementById('m2-helper');
+    if (inputHa && helperM2) {
+        function updateM2() {
+            const val = parseFloat(inputHa.value);
+            if (!isNaN(val) && val > 0) {
+                helperM2.textContent = `Equivalente: ${(val * 10000).toLocaleString('es-AR')} m²`;
+            }
+        }
+        inputHa.addEventListener('input', updateM2);
+        updateM2();
+    }
+});
+</script>
+{% endblock %}

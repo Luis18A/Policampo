@@ -1,0 +1,146 @@
+/* ==========================================================================
+   POLICAMPO - Cuestionario de Parcelas y Cálculos de Superficie
+   ========================================================================== */
+
+.cuestionario-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.25fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+/* Selector Gráfico 3x3 de Ubicación Relativa */
+.relative-grid-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    background-color: var(--color-bg-subtle);
+    padding: 0.65rem;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--color-border);
+}
+
+.grid-cell-btn {
+    background-color: #ffffff;
+    border: 1.5px solid #d1d5db;
+    border-radius: var(--radius-sm);
+    padding: 0.65rem 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #4b5563;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.grid-cell-btn:hover {
+    border-color: var(--color-primary);
+    background-color: #f0fdf4;
+    color: var(--color-primary-dark);
+}
+
+.grid-cell-btn.selected {
+    background-color: var(--color-primary);
+    color: #ffffff;
+    border-color: var(--color-primary-dark);
+    box-shadow: 0 2px 8px rgba(45, 106, 79, 0.3);
+}
+
+/* Selector de los 8 Colores Oficiales */
+.color-picker-group {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-top: 0.35rem;
+}
+
+.color-option-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1px #d1d5db;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.color-option-btn:hover {
+    transform: scale(1.15);
+}
+
+.color-option-btn.selected {
+    box-shadow: 0 0 0 3px var(--color-primary-dark);
+    transform: scale(1.15);
+}
+
+/* Tarjetas de Parcelas Registradas */
+.parcelas-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.parcela-item-card {
+    background: #ffffff;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    transition: var(--transition-fast);
+    border-left: 6px solid #2b8a3e;
+}
+
+.parcela-item-card:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+.parcela-item-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.parcela-item-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.parcela-item-meta {
+    font-size: 0.86rem;
+    color: #4b5563;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.parcela-badge {
+    background-color: var(--color-bg-subtle);
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.parcela-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+@media (max-width: 900px) {
+    .cuestionario-layout {
+        grid-template-columns: 1fr;
+    }
+}

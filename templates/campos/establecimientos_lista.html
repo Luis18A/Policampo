@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mis Establecimientos | PoliCampo{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1 style="color: var(--color-primary-dark);">Mis Establecimientos Agrícolas</h1>
+            <p style="color: #4b5563;">Consultá tus campos registrados, gestioná parcelas y accedé a los croquis.</p>
+        </div>
+        <a href="{% url 'campos:establecimiento_crear' %}" class="btn btn-primary">
+            + Registrar Nuevo Predio
+        </a>
+    </div>
+
+    {% if establecimientos %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+        {% for e in establecimientos %}
+        <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                    <span class="brand-badge" style="background-color: #fef3c7; color: #92400e;">{{ e.ecorregion }}</span>
+                    <span style="font-size: 0.8rem; color: #94a3b8;">{{ e.actualizado_en|date:"d/m/Y" }}</span>
+                </div>
+
+                <h2 style="font-size: 1.35rem; color: var(--color-primary-dark); margin-bottom: 0.35rem;">
+                    {{ e.nombre }}
+                </h2>
+                <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 1rem;">
+                    📍 {{ e.localidad }}, {{ e.departamento }}
+                </p>
+
+                <div style="background-color: #f8fafc; border-radius: var(--radius-sm); padding: 0.85rem; margin-bottom: 1.25rem; font-size: 0.88rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                    <div>🌾 <strong>Cultivo principal:</strong> {{ e.cultivo_principal }}</div>
+                    <div>💧 <strong>Agua:</strong> {{ e.disponibilidad_agua }}</div>
+                    <div>📐 <strong>Superficie total:</strong> <strong>{{ e.superficie_total_ha|floatformat:2 }} ha</strong> ({{ e.superficie_total_m2|floatformat:0 }} m²)</div>
+                    <div>📊 <strong>Parcelas:</strong> {{ e.parcelas.count }} registradas ({{ e.porcentaje_utilizado }}% ocupado)</div>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; border-top: 1px solid var(--color-border); padding-top: 1rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                    <a href="{% url 'campos:parcelas_cuestionario' pk=e.pk %}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem;">
+                        📝 Cuestionario
+                    </a>
+                    <a href="{% url 'campos:croquis_automatico' pk=e.pk %}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem; color: #2b8a3e;">
+                        🌱 Croquis Auto
+                    </a>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                    <a href="{% url 'campos:croquis_manual' pk=e.pk %}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem; color: #ea580c;">
+                        📐 Diseñador
+                    </a>
+                    <a href="{% url 'campos:mapa_geografico' pk=e.pk %}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem; color: #0284c7;">
+                        🗺️ Mapa Satelital
+                    </a>
+                </div>
+                <a href="{% url 'campos:establecimiento_detalle' pk=e.pk %}" class="btn btn-primary btn-sm" style="width: 100%; margin-top: 0.25rem;">
+                    Ver ficha completa &rarr;
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="card" style="text-align: center; padding: 4rem 1.5rem;">
+        <span style="font-size: 3.5rem; display: block; margin-bottom: 1rem;">🌱</span>
+        <h2 style="color: var(--color-primary-dark); margin-bottom: 0.5rem;">Todavía no tenés campos registrados</h2>
+        <p style="color: #64748b; max-width: 480px; margin: 0 auto 1.5rem;">
+            Comenzá registrando tu primer establecimiento agrícola para organizar sus parcelas y croquis.
+        </p>
+        <a href="{% url 'campos:establecimiento_crear' %}" class="btn btn-primary" style="padding: 0.85rem 1.75rem;">
+            + Registrar mi primer campo
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

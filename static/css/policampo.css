@@ -1,0 +1,442 @@
+/* ==========================================================================
+   POLICAMPO - Sistema Agroecológico para Pequeños Productores de Jujuy
+   Estilos Globales y Sistema de Diseño UX/UI
+   ========================================================================== */
+
+:root {
+    /* Paleta Principal Agroecológica */
+    --color-primary-dark: #1b4332;
+    --color-primary: #2d6a4f;
+    --color-primary-light: #40916c;
+    --color-primary-soft: #d8f3dc;
+    --color-primary-badge: #e8f5e9;
+
+    --color-accent-amber: #d97706;
+    --color-accent-clay: #c05621;
+    --color-accent-sky: #0284c7;
+
+    /* Neutros y Superficies */
+    --color-bg: #f8faf8;
+    --color-bg-subtle: #f1f5f1;
+    --color-surface: #ffffff;
+    --color-border: #e2e8e2;
+    --color-border-focus: #2d6a4f;
+
+    /* Tipografía */
+    --color-text-main: #1f2937;
+    --color-text-muted: #4b5563;
+    --color-text-light: #6b7280;
+
+    /* Estados */
+    --color-success: #2b8a3e;
+    --color-warning: #f59f00;
+    --color-danger: #e03131;
+    --color-info: #1971c2;
+
+    /* 8 Colores Oficiales para Croquis (Intensos y de alto contraste) */
+    --croquis-verde: #2b8a3e;
+    --croquis-celeste: #339af0;
+    --croquis-naranja: #ff922b;
+    --croquis-amarillo: #fcc419;
+    --croquis-rosa: #e64980;
+    --croquis-fucsia: #cc5de8;
+    --croquis-violeta: #845ef7;
+    --croquis-turquesa: #20c997;
+
+    /* Geometría y Sombras */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-card: 0 4px 20px rgba(27, 67, 50, 0.08);
+    --shadow-hover: 0 12px 30px rgba(27, 67, 50, 0.14);
+    --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Reset y Base */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--color-bg);
+    color: var(--color-text-main);
+    line-height: 1.5;
+    font-size: 16px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Tipografía de Encabezados */
+h1, h2, h3, h4 {
+    color: var(--color-primary-dark);
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+h1 { font-size: 2rem; }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.25rem; }
+
+p {
+    color: var(--color-text-muted);
+}
+
+/* Barra de Navegación */
+.navbar {
+    background-color: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    padding: 0.85rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-subtle);
+}
+
+.navbar-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    text-decoration: none;
+    color: var(--color-primary-dark);
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.brand-badge {
+    background-color: var(--color-primary-soft);
+    color: var(--color-primary-dark);
+    font-size: 0.72rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.nav-link {
+    text-decoration: none;
+    color: var(--color-text-muted);
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.5rem 0.85rem;
+    border-radius: var(--radius-sm);
+    transition: var(--transition-fast);
+}
+
+.nav-link:hover {
+    color: var(--color-primary);
+    background-color: var(--color-bg-subtle);
+}
+
+.nav-link.active {
+    color: var(--color-primary-dark);
+    background-color: var(--color-primary-soft);
+}
+
+/* Botones Accesibles y Visibles */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.4rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: var(--transition-smooth);
+    min-height: 48px;
+    text-align: center;
+}
+
+.btn-primary {
+    background-color: var(--color-primary);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(45, 106, 79, 0.25);
+}
+
+.btn-primary:hover {
+    background-color: var(--color-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(27, 67, 50, 0.3);
+    color: #ffffff;
+}
+
+.btn-secondary {
+    background-color: var(--color-surface);
+    color: var(--color-primary-dark);
+    border: 1.5px solid var(--color-border);
+}
+
+.btn-secondary:hover {
+    border-color: var(--color-primary);
+    background-color: var(--color-bg-subtle);
+    color: var(--color-primary-dark);
+}
+
+.btn-success {
+    background-color: var(--croquis-verde);
+    color: #ffffff;
+}
+
+.btn-success:hover {
+    background-color: #237032;
+    color: #ffffff;
+}
+
+.btn-sm {
+    min-height: 36px;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.88rem;
+    border-radius: var(--radius-sm);
+}
+
+.btn-danger {
+    background-color: #ffe3e3;
+    color: var(--color-danger);
+    border: 1px solid #ffa8a8;
+}
+
+.btn-danger:hover {
+    background-color: var(--color-danger);
+    color: #ffffff;
+}
+
+/* Contenedores Principales */
+.main-content {
+    flex: 1;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+}
+
+/* Tarjetas y Contenedores */
+.card {
+    background-color: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--color-border);
+    padding: 1.5rem;
+    transition: var(--transition-smooth);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-hover);
+}
+
+/* Notificaciones y Mensajes Flash */
+.messages-container {
+    max-width: 1200px;
+    margin: 1rem auto 0;
+    padding: 0 1.25rem;
+}
+
+.alert {
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    animation: fadeIn 0.3s ease;
+}
+
+.alert-success {
+    background-color: #e8f5e9;
+    color: #1e4620;
+    border: 1px solid #c8e6c9;
+}
+
+.alert-error, .alert-danger {
+    background-color: #ffebee;
+    color: #b71c1c;
+    border: 1px solid #ffcdd2;
+}
+
+.alert-info {
+    background-color: #e3f2fd;
+    color: #0d47a1;
+    border: 1px solid #bbdefb;
+}
+
+/* Métricas Resumen (Barra de Superficie) */
+.metrics-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.metric-box {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1.15rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.metric-title {
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--color-text-light);
+}
+
+.metric-val {
+    font-size: 1.65rem;
+    font-weight: 800;
+    color: var(--color-primary-dark);
+}
+
+.metric-sub {
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+}
+
+/* Barra de Progreso de Distribución */
+.progress-wrapper {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1.2rem;
+    margin-bottom: 2rem;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.6rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.progress-track {
+    width: 100%;
+    height: 18px;
+    background-color: #e9ecef;
+    border-radius: 9999px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2d6a4f, #52b788);
+    transition: width 0.4s ease-in-out;
+}
+
+.progress-fill.warning {
+    background: linear-gradient(90deg, #e67700, #fcc419);
+}
+
+.progress-fill.danger {
+    background: linear-gradient(90deg, #c92a2a, #ff6b6b);
+}
+
+/* Formularios */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-label {
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--color-text-main);
+}
+
+.form-input, .form-select, .form-textarea {
+    width: 100%;
+    padding: 0.75rem 0.95rem;
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.98rem;
+    color: var(--color-text-main);
+    background-color: #ffffff;
+    transition: var(--transition-fast);
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.15);
+}
+
+.form-help {
+    font-size: 0.8rem;
+    color: var(--color-text-light);
+}
+
+.form-error {
+    color: var(--color-danger);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 0.25rem;
+}
+
+/* Footer */
+.footer {
+    background-color: #ffffff;
+    border-top: 1px solid var(--color-border);
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--color-text-light);
+    font-size: 0.88rem;
+    margin-top: auto;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+    .metrics-strip {
+        grid-template-columns: 1fr;
+    }
+    .main-content {
+        padding: 1.25rem 0.85rem;
+    }
+}
