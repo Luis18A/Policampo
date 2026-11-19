@@ -28,19 +28,37 @@
 
             <nav class="menu" id="menu-principal" aria-label="Menú principal" data-menu>
                 <div class="menu-enlaces">
-                    <a href="{% url 'principal:inicio' %}#que-es">Qué es</a>
-                    <a href="{% url 'principal:inicio' %}#como-funciona">Cómo funciona</a>
-                    <a href="{% url 'principal:inicio' %}#para-quien">Para quién es</a>
-                    <a href="{% url 'principal:inicio' %}#contacto">Contacto</a>
+                    {% if user.is_authenticated %}
+                        {% comment %}
+                            Menú de quien ya inició sesión: accesos a la carga de datos (app campos).
+                            request.resolver_match dice qué URL se está viendo: con eso marcamos
+                            la opción actual con la clase "activo" (el CSS le dibuja el subrayado).
+                        {% endcomment %}
+                        {% with ruta=request.resolver_match %}
+                            <a href="{% url 'campos:pantalla_entrada' %}"
+                               {% if ruta.namespace == 'campos' and ruta.url_name == 'pantalla_entrada' %}class="activo" aria-current="page"{% endif %}>Inicio</a>
+                            <a href="{% url 'campos:establecimientos_lista' %}"
+                               {% if ruta.namespace == 'campos' and ruta.url_name != 'pantalla_entrada' and ruta.url_name != 'establecimiento_crear' %}class="activo" aria-current="page"{% endif %}>Mis establecimientos</a>
+                        {% endwith %}
+                    {% else %}
+                        <!-- Menú del visitante: lleva a las secciones de la landing -->
+                        <a href="{% url 'principal:inicio' %}#que-es">Qué es</a>
+                        <a href="{% url 'principal:inicio' %}#como-funciona">Cómo funciona</a>
+                        <a href="{% url 'principal:inicio' %}#para-quien">Para quién es</a>
+                        <a href="{% url 'principal:inicio' %}#contacto">Contacto</a>
+                    {% endif %}
                 </div>
                 <div class="menu-cuenta">
                     {% if user.is_authenticated %}
-                        <span class="saludo">Hola, {{ user.username }}</span>
+                        <a href="{% url 'campos:establecimiento_crear' %}" class="boton boton-nuevo">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                            Nuevo predio
+                        </a>
                         {% if user.es_administrador %}
                             <!-- Solo lo ven los administradores: lleva al panel /admin de Django -->
-                            <a href="{% url 'admin:index' %}" class="boton boton-contorno">
+                            <a href="{% url 'admin:index' %}" class="boton boton-contorno boton-admin" title="Administración">
                                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
-                                Administración
+                                <span class="boton-texto">Administración</span>
                             </a>
                         {% endif %}
                         <!-- El logout es un POST con token CSRF, no un enlace -->
@@ -54,6 +72,15 @@
                     {% endif %}
                 </div>
             </nav>
+
+            {% if user.is_authenticated %}
+                <!-- Avatar: círculo con la inicial del usuario, indica que hay una sesión iniciada.
+                     Va fuera del <nav> para quedar siempre visible en la esquina (también en celular).
+                     role="img" + aria-label: los lectores de pantalla lo leen como "Sesión iniciada como …". -->
+                <span class="avatar" role="img" aria-label="Sesión iniciada como {{ user.username }}" title="Sesión iniciada como {{ user.username }}">
+                    {{ user.username|first|upper }}
+                </span>
+            {% endif %}
         </div>
     </header>
 
@@ -99,5 +126,6 @@
     {% endblock %}
 
     <script src="{% static 'js/menu.js' %}" defer></script>
+    {% block scripts_extra %}{% endblock %}
 </body>
 </html>

@@ -31,9 +31,29 @@ class LandingTests(TestCase):
         get_user_model().objects.create_user("martina", "martina@mail.com", "Quebrada-Huma2024")
         self.client.login(username="martina", password="Quebrada-Huma2024")
         respuesta = self.client.get(self.url)
-        self.assertContains(respuesta, "Hola, martina")
+        # El avatar con la inicial indica la sesión iniciada (y nombra al usuario para lectores de pantalla)
+        self.assertContains(respuesta, 'aria-label="Sesión iniciada como martina"')
+        self.assertNotContains(respuesta, "Hola, martina")
         self.assertContains(respuesta, "Cerrar sesión")
         self.assertNotContains(respuesta, "Crear cuenta")
+
+    def test_menu_cambia_segun_si_inicio_sesion(self):
+        # Visitante: ve las secciones de la landing
+        visitante = self.client.get(self.url)
+        self.assertContains(visitante, 'href="/#que-es"')
+        self.assertNotContains(visitante, reverse("campos:establecimiento_crear"))
+
+        # Con sesión iniciada: ve Inicio, Mis establecimientos y Nuevo predio, y no las secciones
+        get_user_model().objects.create_user("martina", "martina@mail.com", "Quebrada-Huma2024")
+        self.client.login(username="martina", password="Quebrada-Huma2024")
+        con_sesion = self.client.get(self.url)
+        self.assertNotContains(con_sesion, 'href="/#que-es"')
+        self.assertContains(con_sesion, reverse("campos:establecimientos_lista"))
+        self.assertContains(con_sesion, reverse("campos:establecimiento_crear"))
+
+        # La opción de la página actual queda marcada
+        lista = self.client.get(reverse("campos:establecimientos_lista"))
+        self.assertContains(lista, 'class="activo" aria-current="page">Mis establecimientos')
 
     def test_boton_administracion_solo_para_administradores(self):
         Usuario = get_user_model()
@@ -45,7 +65,7 @@ class LandingTests(TestCase):
         self.assertNotContains(self.client.get(self.url), url_admin)
 
         self.client.login(username="jefa", password="Quebrada-Huma2024")
-        self.assertContains(self.client.get(self.url), f'href="{url_admin}" class="boton boton-contorno"')
+        self.assertContains(self.client.get(self.url), f'href="{url_admin}" class="boton boton-contorno boton-admin"')
 
     def test_mensaje_de_bienvenida_se_muestra_como_aviso_flotante(self):
         # Después de registrarse, la landing muestra el mensaje en el contenedor flotante

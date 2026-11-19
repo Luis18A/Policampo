@@ -137,12 +137,12 @@ class LoginTests(TestCase):
 
     def test_login_con_nombre_de_usuario(self):
         respuesta = self.client.post(self.url, {"username": "martina", "password": CONTRASENA})
-        self.assertRedirects(respuesta, reverse("principal:inicio"))
+        self.assertRedirects(respuesta, reverse("campos:pantalla_entrada"))
         self.assertLogueado()
 
     def test_login_con_email(self):
         respuesta = self.client.post(self.url, {"username": "martina@mail.com", "password": CONTRASENA})
-        self.assertRedirects(respuesta, reverse("principal:inicio"))
+        self.assertRedirects(respuesta, reverse("campos:pantalla_entrada"))
         self.assertLogueado()
 
     def test_login_con_email_en_mayusculas(self):

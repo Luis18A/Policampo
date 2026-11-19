@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "usuarios",
     "principal",
     "suscripciones",   # por ahora solo pantallas visuales de plan y pago (no cobra nada)
+    "campos",          # carga de establecimientos: cuestionario, croquis y mapa (parte de Sol)
 ]
 
 MIDDLEWARE = [
@@ -116,7 +117,8 @@ AUTHENTICATION_BACKENDS = [
 
 # A dónde redirigir: login requerido, después de entrar y después de salir.
 LOGIN_URL = "usuarios:login"
-LOGIN_REDIRECT_URL = "principal:inicio"
+# Después de iniciar sesión, el usuario va a la pantalla de entrada de carga de datos (app campos).
+LOGIN_REDIRECT_URL = "campos:pantalla_entrada"
 LOGOUT_REDIRECT_URL = "principal:inicio"
 
 AUTH_PASSWORD_VALIDATORS = [

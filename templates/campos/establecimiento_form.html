@@ -1,0 +1,173 @@
+{% extends 'campos/base_campos.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }} | PoliCampo{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <!-- Encabezado de la página -->
+    <div style="margin-bottom: 2rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <a href="{% url 'campos:pantalla_entrada' %}" style="text-decoration: none; color: #6b7280; font-size: 0.9rem;">
+                &larr; Volver al inicio
+            </a>
+            {% if modo == 'superficies' %}
+            <span class="brand-badge">Modo: Registro por Superficies</span>
+            {% elif modo == 'disenador' %}
+            <span class="brand-badge" style="background-color: #ffedd5; color: #9a3412;">Modo: Diseñador Manual</span>
+            {% elif modo == 'mapa' %}
+            <span class="brand-badge" style="background-color: #e0f2fe; color: #075985;">Modo: Ubicación Satelital</span>
+            {% endif %}
+        </div>
+        <h1 style="color: var(--color-primary-dark);">{{ titulo }}</h1>
+        <p style="color: #4b5563;">{{ subtitulo }}</p>
+    </div>
+
+    <!-- Formulario en tarjeta blanca -->
+    <div class="card">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for err in form.non_field_errors %}
+                <p>{{ err }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="form-grid">
+                <!-- Nombre del Predio -->
+                <div class="form-group full-width">
+                    <label class="form-label" for="{{ form.nombre.id_for_label }}">
+                        Nombre del establecimiento agrícola *
+                    </label>
+                    {{ form.nombre }}
+                    {% if form.nombre.errors %}
+                    <span class="form-error">{{ form.nombre.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Dirección o Paraje -->
+                <div class="form-group full-width">
+                    <label class="form-label" for="{{ form.direccion.id_for_label }}">
+                        Dirección o Paraje rural (Opcional)
+                    </label>
+                    {{ form.direccion }}
+                    <span class="form-help">Permite identificar y localizar tu campo (no se usa para inventar cultivos).</span>
+                    {% if form.direccion.errors %}
+                    <span class="form-error">{{ form.direccion.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Departamento -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.departamento.id_for_label }}">
+                        Departamento (Jujuy) *
+                    </label>
+                    {{ form.departamento }}
+                    {% if form.departamento.errors %}
+                    <span class="form-error">{{ form.departamento.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Localidad -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.localidad.id_for_label }}">
+                        Localidad o Paraje *
+                    </label>
+                    {{ form.localidad }}
+                    {% if form.localidad.errors %}
+                    <span class="form-error">{{ form.localidad.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Ecorregión -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.ecorregion.id_for_label }}">
+                        Ecorregión de Jujuy *
+                    </label>
+                    {{ form.ecorregion }}
+                    {% if form.ecorregion.errors %}
+                    <span class="form-error">{{ form.ecorregion.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Superficie Total (ha) -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.superficie_total_ha.id_for_label }}">
+                        Superficie total (en Hectáreas) *
+                    </label>
+                    {{ form.superficie_total_ha }}
+                    <span class="form-help">Ej: 1.5 ha = 15.000 m². Usar punto decimal.</span>
+                    {% if form.superficie_total_ha.errors %}
+                    <span class="form-error">{{ form.superficie_total_ha.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Cultivo Principal -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.cultivo_principal.id_for_label }}">
+                        Cultivo principal del predio *
+                    </label>
+                    {{ form.cultivo_principal }}
+                    {% if form.cultivo_principal.errors %}
+                    <span class="form-error">{{ form.cultivo_principal.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Disponibilidad de Agua -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.disponibilidad_agua.id_for_label }}">
+                        Disponibilidad y fuente de agua *
+                    </label>
+                    {{ form.disponibilidad_agua }}
+                    {% if form.disponibilidad_agua.errors %}
+                    <span class="form-error">{{ form.disponibilidad_agua.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Dimensiones Opcionales -->
+                <div class="form-group full-width" style="margin-top: 0.5rem; padding-top: 1rem; border-top: 1px dashed var(--color-border);">
+                    <div style="font-weight: 700; color: var(--color-primary-dark); margin-bottom: 0.25rem;">
+                        Medidas estimadas del terreno (Opcional)
+                    </div>
+                    <p style="font-size: 0.88rem; color: #6b7280; margin-bottom: 0.75rem;">
+                        Si conocés el largo y el ancho aproximados en metros podés indicarlos aquí. De lo contrario, dejálos vacíos.
+                    </p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.largo_estimado_m.id_for_label }}">
+                        Largo estimado (metros)
+                    </label>
+                    {{ form.largo_estimado_m }}
+                    {% if form.largo_estimado_m.errors %}
+                    <span class="form-error">{{ form.largo_estimado_m.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.ancho_estimado_m.id_for_label }}">
+                        Ancho estimado (metros)
+                    </label>
+                    {{ form.ancho_estimado_m }}
+                    {% if form.ancho_estimado_m.errors %}
+                    <span class="form-error">{{ form.ancho_estimado_m.errors.0 }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div style="margin-top: 2rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                <a href="{% url 'campos:pantalla_entrada' %}" class="btn btn-secondary">
+                    Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary" style="padding-left: 2rem; padding-right: 2rem;">
+                    {{ boton_texto }} &rarr;
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

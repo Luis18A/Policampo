@@ -61,7 +61,7 @@
                 </dl>
                 {# disabled: el botón no se puede tocar. aria-disabled lo anuncia a lectores de pantalla. #}
                 <button type="button" class="boton boton-ancho" disabled aria-disabled="true">Pagar ${{ plan.precio }}</button>
-                <a href="{% url 'principal:inicio' %}" class="boton boton-secundario boton-ancho">Continuar sin pagar por ahora</a>
+                <a href="{% url 'campos:pantalla_entrada' %}" class="boton boton-secundario boton-ancho">Continuar sin pagar por ahora</a>
                 <a href="{% url 'suscripciones:plan' %}" class="suscripcion-saltear">Volver al plan</a>
             </aside>
         </div>

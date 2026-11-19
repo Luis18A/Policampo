@@ -362,3 +362,50 @@ section[id] { scroll-margin-top: 80px; }
     border-radius: 999px;
 }
 .etiqueta::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--calendula); }
+
+/* --- Avatar (sesión iniciada) -------------------------------------------------
+   Círculo con la inicial del usuario en la esquina de la cabecera.
+   El box-shadow de 2px blanco hace de "aro", así se distingue sobre la foto
+   de la portada y sobre la cabecera verde oscura. */
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--calendula);
+    color: #1d1405;
+    font-weight: 800;
+    font-size: 1.05rem;
+    box-shadow: 0 0 0 2px var(--blanco);
+    user-select: none;
+    cursor: default;
+}
+
+/* Celular: el avatar queda a la izquierda del botón hamburguesa (order cambia el orden visual)
+   y los botones de la cuenta van uno debajo del otro, a todo el ancho. */
+@media (max-width: 899px) {
+    .avatar { order: 1; margin-left: auto; }
+    .boton-menu { order: 2; }
+    .menu-cuenta { flex-direction: column; align-items: stretch; }
+    .menu-cuenta .boton,
+    .menu-cuenta .form-salir .boton { width: 100%; }
+}
+
+/* Computadora: el menú se pega a la derecha y el avatar queda al final, en la esquina */
+@media (min-width: 900px) {
+    .menu { margin-left: auto; }
+    .menu-enlaces a, .menu-cuenta .boton { white-space: nowrap; }   /* que ninguna opción se parta en dos líneas */
+}
+
+/* Pantallas medianas (900–1199 px): no entra todo el menú de un administrador en una línea,
+   así que "Administración" muestra solo el ícono del escudo. El nombre sigue en el title
+   (aparece al pasar el mouse) y lo leen los lectores de pantalla gracias a .solo-lector. */
+@media (min-width: 900px) and (max-width: 1199px) {
+    .boton-admin { padding-inline: 0.7rem; }
+    .boton-admin .boton-texto {
+        position: absolute; width: 1px; height: 1px; overflow: hidden;
+        clip: rect(0 0 0 0); white-space: nowrap;
+    }
+}
