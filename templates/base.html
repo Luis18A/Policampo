@@ -1,0 +1,103 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <!-- Necesario para que se vea bien en el celular -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block titulo %}PoliCampo{% endblock %}</title>
+    <meta name="description" content="{% block descripcion %}PoliCampo: sistema de apoyo a la toma de decisiones agroecológicas para fincas de Jujuy.{% endblock %}">
+
+    <!-- Fuente Plus Jakarta Sans. "display=swap" muestra el texto con la fuente
+         del sistema mientras carga, así no queda la página en blanco con poca señal. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+
+    <link rel="stylesheet" href="{% static 'css/estilos.css' %}">
+    {% block estilos_extra %}{% endblock %}
+</head>
+<body class="{% block clase_body %}{% endblock %}">
+    <header class="cabecera">
+        <div class="contenedor cabecera-interior">
+            <a class="marca" href="{% url 'principal:inicio' %}">{% include "_logo.html" %}PoliCampo</a>
+
+            <!-- Botón hamburguesa (solo celular). menu.js abre y cierra el menú. -->
+            <button class="boton-menu" type="button" aria-controls="menu-principal" aria-expanded="false" data-boton-menu>
+                <span class="hamburguesa" aria-hidden="true"></span><span class="solo-lector">Abrir menú</span>
+            </button>
+
+            <nav class="menu" id="menu-principal" aria-label="Menú principal" data-menu>
+                <div class="menu-enlaces">
+                    <a href="{% url 'principal:inicio' %}#que-es">Qué es</a>
+                    <a href="{% url 'principal:inicio' %}#como-funciona">Cómo funciona</a>
+                    <a href="{% url 'principal:inicio' %}#para-quien">Para quién es</a>
+                    <a href="{% url 'principal:inicio' %}#contacto">Contacto</a>
+                </div>
+                <div class="menu-cuenta">
+                    {% if user.is_authenticated %}
+                        <span class="saludo">Hola, {{ user.username }}</span>
+                        {% if user.es_administrador %}
+                            <!-- Solo lo ven los administradores: lleva al panel /admin de Django -->
+                            <a href="{% url 'admin:index' %}" class="boton boton-contorno">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
+                                Administración
+                            </a>
+                        {% endif %}
+                        <!-- El logout es un POST con token CSRF, no un enlace -->
+                        <form method="post" action="{% url 'usuarios:logout' %}" class="form-salir">
+                            {% csrf_token %}
+                            <button type="submit" class="boton boton-secundario">Cerrar sesión</button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'usuarios:login' %}" class="boton boton-secundario">Iniciar sesión</a>
+                        <a href="{% url 'usuarios:registro' %}" class="boton">Registrarse</a>
+                    {% endif %}
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Mensajes (ej: "¡Bienvenido/a!" al registrarse). Se muestran como un aviso flotante
+         ("toast") arriba a la derecha, en vez de ocupar lugar en la página: así no empujan
+         la portada hacia abajo ni rompen la cabecera transparente. menu.js los cierra solos. -->
+    {% if messages %}
+        <div class="mensajes" data-mensajes>
+            {% for mensaje in messages %}
+                <div class="mensaje mensaje-{{ mensaje.tags }}" role="status">
+                    <span>{{ mensaje }}</span>
+                    <button type="button" class="mensaje-cerrar" aria-label="Cerrar aviso" data-cerrar-mensaje>&times;</button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <main id="contenido" class="principal">
+        {% block contenido %}{% endblock %}
+    </main>
+
+    {% block pie %}
+    <footer class="pie">
+        <div class="contenedor pie-interior">
+            <div>
+                <a class="marca" href="{% url 'principal:inicio' %}">{% include "_logo.html" %}PoliCampo</a>
+                <p>Sistema de apoyo a la toma de decisiones agroecológicas. Proyecto de un grupo de alumnos de la Facultad de Ingeniería, UNJu.</p>
+            </div>
+            <p class="pie-legal">
+                Tus datos personales se tratan según la Ley N.º 25.326 de Protección de los Datos Personales.
+                Solo se usan para el funcionamiento de PoliCampo y no se comparten con terceros.
+            </p>
+            <p class="pie-creditos">
+                Fotos de <a href="https://unsplash.com/es/@danielpintilei">Daniel Pintilei</a>,
+                <a href="https://unsplash.com/es/@sharissajohnson">Sharissa Johnson</a>,
+                <a href="https://unsplash.com/es/@aaronburden">Aaron Burden</a>,
+                <a href="https://unsplash.com/es/@ries_bosch">Ries Bosch</a> y
+                <a href="https://unsplash.com/es/@justusmenke">Justus Menke</a> en
+                <a href="https://unsplash.com/">Unsplash</a>.
+            </p>
+        </div>
+    </footer>
+    {% endblock %}
+
+    <script src="{% static 'js/menu.js' %}" defer></script>
+</body>
+</html>

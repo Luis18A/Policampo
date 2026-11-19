@@ -1,0 +1,277 @@
+/* =============================================================================
+   Estilos de la landing page (solo se cargan en principal/inicio.html).
+   Usa las variables definidas en estilos.css.
+   ========================================================================== */
+
+.seccion { padding: 3.5rem 0; }
+.seccion-titulo { font-size: clamp(1.8rem, 4.5vw, 2.8rem); margin-bottom: 0.75rem; }
+.seccion-bajada { color: var(--gris); max-width: 40rem; margin: 0 0 2rem; font-size: 1.05rem; }
+
+/* Encabezado de sección centrado (etiqueta + título + bajada), solo en computadora.
+   En celular queda alineado a la izquierda, que se lee mejor en pantallas angostas.
+   margin-inline: auto centra la caja; text-align: center centra el texto dentro de ella. */
+@media (min-width: 900px) {
+    .encabezado-centrado { text-align: center; max-width: 52rem; margin-inline: auto; }
+    .encabezado-centrado .seccion-bajada { max-width: none; font-size: 1.12rem; }
+}
+
+/* (.etiqueta está en estilos.css porque también la usan otras páginas) */
+
+/* --- Portada ------------------------------------------------------------------ */
+/* La portada ocupa todo el ancho y todo el alto de la pantalla.
+   margin-top negativo = alto de la cabecera: así la foto empieza detrás de la cabecera
+   transparente, como en la imagen de inspiración. */
+.portada {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    min-height: 100vh;
+    min-height: 100svh;          /* en celular, descuenta las barras del navegador */
+    margin-top: -65px;          /* 64px de alto + 1px del borde inferior */
+    padding: calc(65px + 2rem) 0 2rem;
+    color: var(--blanco);
+    background: var(--verde-900) url("../img/portada.jpg") center / cover no-repeat;
+}
+.portada::before {   /* oscurecido: arriba para que se lea el menú, abajo para que se lea el texto */
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg,
+        rgba(10, 30, 16, 0.55) 0%, rgba(10, 30, 16, 0.15) 22%,
+        rgba(10, 30, 16, 0.35) 55%, rgba(10, 30, 16, 0.85) 100%);
+}
+.portada-interior { position: relative; }   /* queda por encima del oscurecido */
+.portada-texto { position: relative; max-width: 44rem; }
+.portada .etiqueta { background: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.35); color: var(--blanco); }
+.portada h1 {
+    color: var(--blanco);
+    font-size: clamp(2.3rem, 7vw, 4.4rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+}
+.portada h1 em { font-style: normal; color: #ffc27a; }
+.portada-bajada { font-size: 1.08rem; max-width: 34rem; opacity: 0.92; margin: 0 0 1.5rem; }
+.portada-botones { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+
+/* Tarjeta flotante de la portada */
+.portada-tarjeta {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-top: 1.75rem;
+    padding: 0.75rem;
+    max-width: 21rem;
+    color: var(--texto);
+    background: var(--blanco);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+}
+.portada-tarjeta img { width: 72px; height: 72px; object-fit: cover; border-radius: var(--radio-chico); }
+.portada-tarjeta strong { display: block; font-size: 1.5rem; color: var(--verde-900); line-height: 1.1; }
+.portada-tarjeta span { font-size: 0.88rem; color: var(--gris); }
+
+@media (min-width: 900px) {
+    .portada { padding-bottom: 4rem; }
+    /* La tarjeta se ubica abajo a la derecha, alineada con el borde del contenedor */
+    .portada-tarjeta { position: absolute; right: 1rem; bottom: 0; margin: 0; }
+}
+
+/* --- Cabecera transparente sobre la foto (solo en la landing) ----------------
+   Mientras estás arriba de todo, la cabecera no tiene fondo y el texto es blanco.
+   Al bajar, menu.js le agrega la clase .con-fondo y pasa a verde oscuro (ver estilos.css). */
+.pagina-landing .cabecera:not(.con-fondo) {
+    background: transparent;
+    border-bottom-color: transparent;
+    backdrop-filter: none;
+}
+.pagina-landing .cabecera:not(.con-fondo) .marca { color: var(--blanco); }
+
+@media (min-width: 900px) {
+    /* En computadora los enlaces del menú también van en blanco.
+       (En celular no: el menú desplegable tiene fondo blanco y texto oscuro.) */
+    .pagina-landing .cabecera:not(.con-fondo) .menu-enlaces a,
+    .pagina-landing .cabecera:not(.con-fondo) .saludo,
+    .pagina-landing .cabecera:not(.con-fondo) .boton-contorno { color: var(--blanco); }
+    .pagina-landing .cabecera:not(.con-fondo) .boton-contorno:hover { background: rgba(255, 255, 255, 0.15); }
+}
+
+/* --- Qué es: frase grande con fotitos entre las palabras -------------------- */
+.que-es-frase {
+    font-size: clamp(1.45rem, 3.6vw, 2.4rem);
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--verde-900);
+    max-width: 58rem;
+    margin: 0;
+}
+.pildora-foto {
+    display: inline-block;
+    width: 2.6em; height: 1.2em;
+    vertical-align: -0.18em;
+    border-radius: 999px;
+    object-fit: cover;
+}
+.que-es-detalle { color: var(--gris); max-width: 44rem; margin-top: 1.5rem; font-size: 1.05rem; }
+/* En computadora todo el bloque "Qué es" se centra: la etiqueta, la frase grande y el párrafo.
+   La frase y el párrafo se centran como cajas (margin-inline: auto) y su texto también.
+   El párrafo es un poco más angosto que la frase, así las líneas no quedan demasiado largas
+   para leer (lo cómodo ronda los 70–90 caracteres por línea). */
+@media (min-width: 900px) {
+    .que-es { text-align: center; }
+    /* text-wrap: balance reparte las palabras en líneas de largo parecido,
+       así no queda una sola palabra suelta en la última línea */
+    .que-es-frase { margin-inline: auto; text-wrap: balance; }
+    .que-es-detalle { max-width: 48rem; margin-inline: auto; font-size: 1.15rem; line-height: 1.7; }
+}
+
+/* --- Tarjetas (beneficios) ------------------------------------------------- */
+.grilla { display: grid; gap: 1rem; }
+@media (min-width: 640px) { .grilla-2 { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1000px) { .grilla-4 { grid-template-columns: repeat(4, 1fr); } }
+
+.tarjeta-beneficio {
+    padding: 1.5rem;
+    background: var(--blanco);
+    border: 1px solid var(--salvia-200);
+    border-radius: var(--radio);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.tarjeta-beneficio:hover { transform: translateY(-3px); box-shadow: var(--sombra); }
+.tarjeta-beneficio h3 { font-size: 1.12rem; margin: 1rem 0 0.4rem; }
+.tarjeta-beneficio p { margin: 0; color: var(--gris); font-size: 0.95rem; }
+.icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: var(--salvia-100);
+    color: var(--verde-700);
+}
+.icono svg { width: 24px; height: 24px; }
+
+/* --- Cómo funciona: pasos ---------------------------------------------------- */
+.como-funciona { background: var(--blanco); border-radius: var(--radio-grande); }
+.como-grilla { display: grid; gap: 2rem; align-items: center; }
+.como-foto { border-radius: var(--radio); width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.pasos { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; }
+.paso {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1rem;
+    align-items: start;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--salvia-200);
+    border-radius: var(--radio);
+    background: var(--salvia-100);
+}
+.paso-numero {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    font-weight: 800;
+    color: var(--blanco);
+    background: var(--verde-700);
+}
+.paso h3 { font-size: 1.05rem; margin: 0.15rem 0 0.2rem; }
+.paso p { margin: 0; color: var(--gris); font-size: 0.95rem; }
+
+@media (min-width: 900px) {
+    .como-funciona { padding: 4rem 3rem; }
+    .como-grilla { grid-template-columns: 0.9fr 1.1fr; gap: 3rem; }
+    .como-foto { aspect-ratio: 4 / 5; }
+}
+
+/* --- Ventajas del sistema (franja verde oscura) ---------------------------- */
+.ventajas-caja {
+    display: grid;
+    gap: 2rem;
+    padding: 2rem 1.5rem;
+    color: var(--blanco);
+    background: var(--verde-900);
+    border-radius: var(--radio-grande);
+}
+.ventaja-icono { width: 30px; height: 30px; color: #ffc27a; margin-bottom: 0.6rem; }
+.ventaja-clave {   /* la palabra grande: "Personalizado", "Visual"... */
+    display: block;
+    font-size: clamp(1.6rem, 3.5vw, 2rem);
+    font-weight: 800;
+    line-height: 1.15;
+    color: #ffc27a;
+}
+.ventaja h3 { color: var(--blanco); font-size: 1.08rem; margin: 0.35rem 0 0.3rem; }
+.ventaja p { margin: 0; opacity: 0.82; font-size: 0.95rem; }
+@media (min-width: 640px) { .ventajas-caja { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1000px) { .ventajas-caja { grid-template-columns: repeat(4, 1fr); padding: 3rem; } }
+
+/* --- Para quién es ----------------------------------------------------------- */
+.publico { display: grid; gap: 1rem; }
+.publico-tarjeta {
+    padding: 1.75rem;
+    background: var(--blanco);
+    border: 1px solid var(--salvia-200);
+    border-radius: var(--radio);
+}
+.publico-tarjeta h3 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+.publico-tarjeta p { color: var(--gris); margin: 0; }
+.publico-cultivos { display: grid; gap: 1rem; align-items: center; }
+.publico-cultivos img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: var(--radio); }
+.chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0 0; padding: 0; list-style: none; }
+.chips li {
+    padding: 0.35rem 0.85rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--verde-900);
+    background: var(--salvia-200);
+    border-radius: 999px;
+}
+@media (min-width: 900px) {
+    .publico { grid-template-columns: 1fr 1fr; }
+    .publico-cultivos { grid-column: 1 / -1; grid-template-columns: 1fr 1.4fr; gap: 2rem; }
+}
+
+/* --- Respaldo científico ----------------------------------------------------- */
+.respaldo-caja {
+    display: grid;
+    gap: 2rem;
+    padding: 2rem 1.5rem;
+    background: var(--salvia-200);
+    border-radius: var(--radio-grande);
+}
+.respaldo-caja p { margin: 0 0 1rem; }
+.libro {
+    align-self: start;
+    padding: 1.5rem;
+    background: var(--blanco);
+    border-left: 6px solid var(--calendula);
+    border-radius: var(--radio);
+}
+.libro-etiqueta { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--calendula-oscuro); }
+.libro h3 { font-size: 1.2rem; margin: 0.4rem 0; }
+.libro p { color: var(--gris); margin: 0; font-size: 0.95rem; }
+@media (min-width: 900px) { .respaldo-caja { grid-template-columns: 1.3fr 1fr; padding: 3rem; } }
+
+/* --- Equipo y contacto + llamado final --------------------------------------- */
+.cierre-caja {
+    display: grid;
+    gap: 2rem;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    background: var(--blanco);
+    border: 1px solid var(--salvia-200);
+    border-radius: var(--radio-grande);
+}
+.cierre-caja .seccion-bajada { margin-left: auto; margin-right: auto; }
+.cierre-botones { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; }
+.equipo { padding-top: 2rem; border-top: 1px solid var(--salvia-200); }
+.equipo h3 { font-size: 1.1rem; margin-bottom: 0.4rem; }
+.equipo p { margin: 0.25rem 0; color: var(--gris); }
+
+.seccion-pegada { padding-top: 0; }
+.publico-cultivos .seccion-bajada { margin-bottom: 0; }
+
+/* Si un título va directo a las tarjetas de "Para quién es" (sin bajada), dejamos aire entre ambos */
+.seccion-titulo + .publico { margin-top: 2rem; }

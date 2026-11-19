@@ -1,0 +1,364 @@
+/* =============================================================================
+   Estilos generales de PoliCampo (todas las páginas).
+   Pensado primero para celular ("mobile first"): las reglas base son para
+   pantallas chicas y los @media (min-width: ...) agregan cambios para pantallas
+   más grandes.
+   ========================================================================== */
+
+/* --- Variables: colores, radios y sombras en un solo lugar ------------------ */
+:root {
+    --verde-900: #163a21;   /* títulos, pie de página */
+    --verde-700: #275a33;   /* botones, enlaces */
+    --verde-500: #4a8754;   /* detalles */
+    --salvia-100: #f1f5ee;  /* fondo general */
+    --salvia-200: #e1eadc;  /* fondos de secciones / bordes suaves */
+    --blanco: #ffffff;
+    --calendula: #e5862a;   /* acento floral (botón principal, resaltados) */
+    --calendula-oscuro: #c26b12;
+    --texto: #18261b;
+    --gris: #5a685d;
+    --borde: #d3ddd0;
+    --error: #b3261e;
+
+    --radio-chico: 10px;
+    --radio: 18px;
+    --radio-grande: 28px;
+    --sombra: 0 10px 30px rgba(22, 58, 33, 0.08);
+
+    --fuente: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+    margin: 0;
+    font-family: var(--fuente);
+    color: var(--texto);
+    background: var(--salvia-100);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+img { max-width: 100%; display: block; }
+a { color: var(--verde-700); }
+h1, h2, h3 { line-height: 1.15; color: var(--verde-900); margin-top: 0; }
+
+/* El <main> ocupa el alto disponible, así el pie queda siempre abajo */
+.principal { flex: 1; display: flex; flex-direction: column; }
+
+/* Contenedor centrado con márgenes laterales */
+.contenedor { width: 100%; max-width: 1180px; margin: 0 auto; padding: 0 1rem; }
+
+/* Solo para lectores de pantalla (accesibilidad) */
+.solo-lector {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* --- Cabecera ---------------------------------------------------------------- */
+.cabecera {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(241, 245, 238, 0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--salvia-200);
+}
+.cabecera-interior {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 64px;
+}
+.marca {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 800;
+    font-size: 1.25rem;
+    text-decoration: none;
+    color: var(--verde-900);
+}
+.marca svg { width: 30px; height: 30px; }
+
+/* Botón hamburguesa: visible solo en celular */
+.boton-menu {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px; height: 44px;
+    border: 1px solid var(--borde);
+    border-radius: 50%;
+    background: var(--blanco);
+    cursor: pointer;
+}
+/* Las tres rayitas: una línea (.hamburguesa) y dos más dibujadas con ::before y ::after */
+.hamburguesa,
+.hamburguesa::before,
+.hamburguesa::after {
+    display: block; width: 18px; height: 2px; background: var(--verde-900);
+    position: relative; content: "";
+}
+.hamburguesa::before { position: absolute; top: -6px; left: 0; }
+.hamburguesa::after { position: absolute; top: 6px; left: 0; }
+
+/* Menú: en celular es un panel desplegable que se abre con la clase .abierto */
+.menu {
+    display: none;
+    position: absolute;
+    top: 64px; left: 0; right: 0;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1rem;
+    background: var(--blanco);
+    border-bottom: 1px solid var(--borde);
+    box-shadow: var(--sombra);
+}
+.menu.abierto { display: flex; }
+.menu-enlaces { display: flex; flex-direction: column; gap: 0.25rem; }
+.menu-enlaces a {
+    padding: 0.6rem 0.5rem;
+    text-decoration: none;
+    color: var(--texto);
+    font-weight: 500;
+    border-radius: var(--radio-chico);
+}
+.menu-enlaces a:hover { background: var(--salvia-100); }
+.menu-cuenta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding-top: 0.75rem; }
+.saludo { color: var(--gris); font-size: 0.95rem; }
+.form-salir { margin: 0; }
+
+@media (min-width: 900px) {
+    .boton-menu { display: none; }
+    .menu {
+        display: flex;
+        position: static;
+        flex-direction: row;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 0;
+        background: none;
+        border: 0;
+        box-shadow: none;
+    }
+    .menu-enlaces { flex-direction: row; gap: 0.25rem; }
+    .menu-cuenta { padding-top: 0; }
+
+    /* Subrayado animado del menú horizontal.
+       Cada enlace tiene una línea (::after) "achicada" a ancho 0 con scaleX(0).
+       Al pasar el mouse, o si es la sección en la que estás (.activo), crece a scaleX(1).
+       transform-origin: left hace que crezca de izquierda a derecha. */
+    .menu-enlaces a { position: relative; }
+    .menu-enlaces a:hover { background: none; }
+    .menu-enlaces a::after {
+        content: "";
+        position: absolute;
+        left: 0.5rem; right: 0.5rem; bottom: 0.2rem;
+        height: 2px;
+        border-radius: 2px;
+        background: var(--calendula);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.3s ease;
+    }
+    .menu-enlaces a:hover::after,
+    .menu-enlaces a.activo::after { transform: scaleX(1); }
+}
+
+/* Sección activa en el menú desplegable del celular (ahí no hay subrayado: va resaltada) */
+@media (max-width: 899px) {
+    .menu-enlaces a.activo { background: var(--salvia-100); color: var(--verde-700); font-weight: 700; }
+}
+
+/* --- Cabecera al bajar (.con-fondo, la agrega menu.js) -------------------------
+   Pasa a verde oscuro con texto blanco, así se distingue bien del contenido que pasa por debajo. */
+.cabecera { transition: background 0.25s, border-color 0.25s, box-shadow 0.25s; }
+.cabecera.con-fondo {
+    background: var(--verde-900);
+    border-bottom-color: transparent;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+.cabecera.con-fondo .marca { color: var(--blanco); }
+@media (min-width: 900px) {
+    .cabecera.con-fondo .menu-enlaces a,
+    .cabecera.con-fondo .saludo,
+    .cabecera.con-fondo .boton-contorno { color: var(--blanco); }
+    .cabecera.con-fondo .boton-contorno:hover { background: rgba(255, 255, 255, 0.15); }
+    /* "Registrarse" (verde) se perdería sobre el verde oscuro: pasa al color caléndula */
+    .cabecera.con-fondo .menu-cuenta .boton:not(.boton-secundario):not(.boton-contorno) {
+        background: var(--calendula);
+        border-color: var(--calendula);
+        color: #1d1405;
+    }
+    .cabecera.con-fondo .menu-cuenta .boton:not(.boton-secundario):not(.boton-contorno):hover { background: var(--calendula-oscuro); color: var(--blanco); }
+}
+
+/* Al saltar a una sección desde el menú, que el título no quede tapado por la cabecera fija */
+section[id] { scroll-margin-top: 80px; }
+
+/* --- Botones ------------------------------------------------------------------ */
+.boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.7rem 1.3rem;
+    font: inherit;
+    font-weight: 700;
+    font-size: 0.98rem;
+    color: var(--blanco);
+    background: var(--verde-700);
+    border: 1px solid var(--verde-700);
+    border-radius: 999px;   /* forma de píldora */
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+.boton:hover { background: var(--verde-900); transform: translateY(-1px); }
+.boton-acento { background: var(--calendula); border-color: var(--calendula); color: #1d1405; }
+.boton-acento:hover { background: var(--calendula-oscuro); border-color: var(--calendula-oscuro); color: var(--blanco); }
+.boton-secundario { background: var(--blanco); color: var(--verde-700); border-color: var(--borde); }
+.boton-secundario:hover { background: var(--salvia-200); }
+.boton-claro { background: transparent; color: var(--blanco); border-color: rgba(255, 255, 255, 0.7); }
+.boton-claro:hover { background: rgba(255, 255, 255, 0.15); }
+.boton-ancho { width: 100%; margin-top: 0.5rem; padding: 0.85rem 1.3rem; }
+
+/* Botón de contorno (solo borde, sin relleno). Lo usa "Administración".
+   Toma el color del texto (currentColor) para el borde, así sirve sobre fondo claro,
+   sobre la foto y sobre la cabecera verde oscura sin repetir reglas. */
+.boton-contorno { background: transparent; color: var(--verde-700); border-color: currentColor; }
+.boton-contorno:hover { background: rgba(39, 90, 51, 0.08); color: var(--verde-700); }
+.boton-contorno svg { flex-shrink: 0; }
+
+/* --- Mensajes (django.contrib.messages) como aviso flotante ("toast") -------- */
+.mensajes {
+    position: fixed;
+    top: 76px;               /* justo debajo de la cabecera */
+    right: 1rem;
+    left: 1rem;
+    z-index: 60;             /* por encima de la cabecera (50) */
+    display: grid;
+    gap: 0.5rem;
+    justify-items: end;
+    pointer-events: none;    /* el contenedor no bloquea clics; los avisos sí reciben */
+}
+.mensaje {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    max-width: 26rem;
+    padding: 0.8rem 0.8rem 0.8rem 1rem;
+    border-radius: var(--radio-chico);
+    background: var(--blanco);
+    color: var(--verde-900);
+    font-weight: 600;
+    border-left: 5px solid var(--verde-500);
+    box-shadow: 0 10px 30px rgba(22, 58, 33, 0.2);
+    transition: opacity 0.3s, transform 0.3s;
+}
+.mensaje.oculto { opacity: 0; transform: translateY(-8px); }
+.mensaje-error { color: var(--error); border-left-color: var(--error); }
+.mensaje-cerrar {
+    margin-left: auto;
+    width: 28px; height: 28px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--gris);
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+}
+.mensaje-cerrar:hover { background: var(--salvia-100); }
+
+/* --- Formularios -------------------------------------------------------------- */
+.campo { margin-bottom: 1rem; }
+.campo label { display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.95rem; }
+.campo input {
+    width: 100%;
+    padding: 0.8rem 0.95rem;
+    font: inherit;
+    font-size: 1rem;            /* 16px evita que el celular haga zoom al escribir */
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-chico);
+    background: var(--blanco);
+}
+.campo input:focus { outline: 3px solid rgba(74, 135, 84, 0.25); border-color: var(--verde-500); }
+.campo-con-error input { border-color: var(--error); }
+.ayuda { display: block; color: var(--gris); font-size: 0.82rem; margin-top: 0.3rem; line-height: 1.45; }
+.ayuda ul { margin: 0.25rem 0 0; padding-left: 1.1rem; }
+.error { color: var(--error); font-size: 0.9rem; margin: 0.3rem 0; }
+
+/* --- Pantallas de acceso (login / registro): pantalla dividida -------------- */
+.acceso {
+    flex: 1;
+    display: grid;
+    grid-template-rows: 180px 1fr;   /* celular: franja de foto arriba */
+}
+.acceso-imagen {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    padding: 1.25rem;
+    color: var(--blanco);
+    background: var(--verde-900) url("../img/acceso.jpg") center / cover no-repeat;
+}
+.acceso-imagen::before {     /* oscurecido para que se lea el texto */
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(22, 58, 33, 0.1) 0%, rgba(22, 58, 33, 0.75) 100%);
+}
+.acceso-mensaje { position: relative; max-width: 30rem; }
+.acceso-mensaje h2 { color: var(--blanco); font-size: 1.35rem; margin: 0; }
+.acceso-mensaje p { display: none; margin: 0.75rem 0 0; opacity: 0.9; }
+.acceso-formulario { display: flex; justify-content: center; padding: 2rem 1rem 3rem; }
+.acceso-caja { width: 100%; max-width: 420px; }
+.acceso-caja h1 { font-size: 1.9rem; margin-bottom: 0.25rem; }
+.subtitulo { color: var(--gris); margin-top: 0; margin-bottom: 1.5rem; }
+.aviso-datos { font-size: 0.8rem; color: var(--gris); margin-top: 1.25rem; }
+.alternativa { text-align: center; margin-top: 1.25rem; }
+
+@media (min-width: 900px) {
+    .acceso { grid-template-rows: none; grid-template-columns: 1fr 1fr; }
+    /* La foto queda fija mientras se baja por un formulario largo (registro) */
+    .acceso-imagen { padding: 3rem; position: sticky; top: 64px; height: calc(100vh - 64px); }
+    .acceso-mensaje h2 { font-size: 2.2rem; }
+    .acceso-mensaje p { display: block; }
+    .acceso-formulario { align-items: center; padding: 3rem 2rem; }
+}
+
+/* --- Pie de página ------------------------------------------------------------ */
+.pie { background: var(--verde-900); color: rgba(255, 255, 255, 0.8); padding: 2.5rem 0 1.5rem; font-size: 0.9rem; }
+.pie a { color: var(--blanco); }
+.pie-interior { display: grid; gap: 1.5rem; }
+.pie .marca { color: var(--blanco); }
+.pie-legal, .pie-creditos { font-size: 0.8rem; color: rgba(255, 255, 255, 0.65); margin: 0; }
+.pie-creditos { border-top: 1px solid rgba(255, 255, 255, 0.15); padding-top: 1rem; }
+
+@media (min-width: 900px) {
+    .pie-interior { grid-template-columns: 1.2fr 1fr; align-items: start; }
+    .pie-creditos { grid-column: 1 / -1; }
+}
+
+/* --- Etiqueta (compartida por la landing y otras páginas) --------------- */
+/* Etiqueta chica arriba de cada título: "● Cómo funciona" */
+.etiqueta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.8rem;
+    margin-bottom: 1rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--verde-700);
+    background: var(--blanco);
+    border: 1px solid var(--borde);
+    border-radius: 999px;
+}
+.etiqueta::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--calendula); }

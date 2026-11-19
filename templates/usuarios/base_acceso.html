@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{# Plantilla común para login y registro: pantalla dividida (foto + formulario). #}
+
+{% block pie %}{% endblock %}{# En las pantallas de acceso no mostramos el pie, para que quede limpio. #}
+
+{% block contenido %}
+<div class="acceso">
+    <div class="acceso-imagen">
+        <div class="acceso-mensaje">
+            <h2>{% block mensaje_titulo %}Más flores, más vida en tu finca{% endblock %}</h2>
+            <p>{% block mensaje_texto %}Diagnósticos de biodiversidad y propuestas de rediseño con franjas florales, pensadas para las fincas de Jujuy.{% endblock %}</p>
+        </div>
+    </div>
+
+    <div class="acceso-formulario">
+        <div class="acceso-caja">
+            {% block formulario %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

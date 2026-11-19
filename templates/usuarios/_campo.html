@@ -1,0 +1,7 @@
+{# Fragmento reutilizable: dibuja un campo de formulario con su etiqueta, ayuda y errores. #}
+<div class="campo{% if campo.errors %} campo-con-error{% endif %}">
+    <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+    {{ campo }}
+    {% if campo.help_text %}<small class="ayuda">{{ campo.help_text|safe }}</small>{% endif %}
+    {% for error in campo.errors %}<p class="error">{{ error }}</p>{% endfor %}
+</div>

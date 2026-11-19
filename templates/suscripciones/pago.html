@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Pago · PoliCampo{% endblock %}
+{% block estilos_extra %}<link rel="stylesheet" href="{% static 'css/suscripciones.css' %}">{% endblock %}
+
+{% block contenido %}
+{% comment %}
+    Pantalla de pago SOLO VISUAL: no hay formulario ni se envía nada al servidor,
+    y a propósito NO hay campos para datos de tarjeta (no queremos que alguien escriba
+    datos reales en algo que no funciona). El botón "Pagar" está deshabilitado.
+{% endcomment %}
+<section class="suscripcion">
+    <div class="contenedor">
+        {% include "suscripciones/_pasos.html" with paso_actual=3 %}
+
+        <div class="suscripcion-encabezado">
+            <span class="etiqueta">Pago</span>
+            <h1>Confirmá tu suscripción</h1>
+        </div>
+
+        <div class="pago-grilla">
+            <div class="pago-medios">
+                <div class="aviso-proximamente" role="note">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5l3 2"/></svg>
+                    <div>
+                        <strong>Los pagos todavía no están habilitados</strong>
+                        <p>Estamos preparando esta función. Mientras tanto, podés seguir usando PoliCampo.</p>
+                    </div>
+                </div>
+
+                <h2>Medio de pago</h2>
+                <ul class="medios-lista">
+                    <li class="medio">
+                        <span class="medio-icono">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h3"/></svg>
+                        </span>
+                        <div>
+                            <strong>Tarjeta de crédito o débito</strong>
+                            <span>Pago mensual automático</span>
+                        </div>
+                    </li>
+                    <li class="medio">
+                        <span class="medio-icono">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-5 9 5"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></svg>
+                        </span>
+                        <div>
+                            <strong>Transferencia bancaria</strong>
+                            <span>Acreditación en 24 a 48 h hábiles</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <aside class="pago-resumen">
+                <h2>Resumen</h2>
+                <dl>
+                    <div><dt>Plan</dt><dd>{{ plan.nombre }}</dd></div>
+                    <div><dt>Facturación</dt><dd>Mensual</dd></div>
+                    <div class="pago-total"><dt>Total</dt><dd>${{ plan.precio }} <small>{{ plan.moneda }} / {{ plan.periodo }}</small></dd></div>
+                </dl>
+                {# disabled: el botón no se puede tocar. aria-disabled lo anuncia a lectores de pantalla. #}
+                <button type="button" class="boton boton-ancho" disabled aria-disabled="true">Pagar ${{ plan.precio }}</button>
+                <a href="{% url 'principal:inicio' %}" class="boton boton-secundario boton-ancho">Continuar sin pagar por ahora</a>
+                <a href="{% url 'suscripciones:plan' %}" class="suscripcion-saltear">Volver al plan</a>
+            </aside>
+        </div>
+    </div>
+</section>
+{% endblock %}

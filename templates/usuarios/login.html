@@ -1,0 +1,23 @@
+{% extends "usuarios/base_acceso.html" %}
+
+{% block titulo %}Iniciar sesión · PoliCampo{% endblock %}
+
+{% block mensaje_titulo %}Qué bueno verte de nuevo{% endblock %}
+
+{% block formulario %}
+<h1>Iniciar sesión</h1>
+<p class="subtitulo">Entrá con tu nombre de usuario o tu email.</p>
+
+<form method="post" novalidate>
+    {% csrf_token %}
+    {% for error in form.non_field_errors %}<p class="error" role="alert">{{ error }}</p>{% endfor %}
+    {% for campo in form %}
+        {% include "usuarios/_campo.html" %}
+    {% endfor %}
+    {# Si veníamos de una página protegida, volvemos ahí después de entrar #}
+    <input type="hidden" name="next" value="{{ next }}">
+    <button type="submit" class="boton boton-ancho">Entrar</button>
+</form>
+
+<p class="alternativa">¿No tenés cuenta? <a href="{% url 'usuarios:registro' %}">Registrate</a></p>
+{% endblock %}

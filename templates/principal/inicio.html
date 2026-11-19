@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}PoliCampo · Franjas florales y biodiversidad para tu finca{% endblock %}
+
+{% block estilos_extra %}<link rel="stylesheet" href="{% static 'css/landing.css' %}">{% endblock %}
+
+{# Esta clase en el <body> activa la cabecera transparente sobre la foto (ver landing.css) #}
+{% block clase_body %}pagina-landing{% endblock %}
+
+{% block contenido %}
+
+{# ============================== PORTADA ============================== #}
+{% comment %}
+    La foto ocupa todo el ancho de la pantalla (la pone el CSS en .portada).
+    Adentro, .contenedor alinea el texto con el logo y el menú de la cabecera.
+    Comentario de varias líneas: por eso usamos comment/endcomment y no la forma corta de una línea.
+{% endcomment %}
+<section class="portada">
+    <div class="contenedor portada-interior">
+            <div class="portada-texto">
+                <span class="etiqueta">Agroecología · Jujuy</span>
+                <h1>Más flores, más vida, <em>mejores cosechas</em></h1>
+                <p class="portada-bajada">
+                    PoliCampo te ayuda a rediseñar tu terreno agrícola mediante franjas florales y plantas de servicio
+                    que favorecen la presencia de polinizadores, promueven el control biológico de plagas
+                    y contribuyen a recuperar la biodiversidad.
+                </p>
+                <div class="portada-botones">
+                    {% if user.is_authenticated %}
+                        <a href="#como-funciona" class="boton boton-acento">Ver cómo funciona</a>
+                    {% else %}
+                        <a href="{% url 'usuarios:registro' %}" class="boton boton-acento">Crear cuenta</a>
+                        <a href="{% url 'usuarios:login' %}" class="boton boton-claro">Iniciar sesión</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="portada-tarjeta">
+                <img src="{% static 'img/abeja.jpg' %}" alt="Abeja posada sobre una flor rosa" width="72" height="72">
+                <div>
+                    <strong>Al menos 20 %</strong>
+                    <span>de hábitat natural para favorecer la biodiversidad</span>
+                </div>
+            </div>
+    </div>
+</section>
+
+{# ============================== QUÉ ES ============================== #}
+<section class="seccion" id="que-es">
+    <div class="contenedor que-es">
+        <span class="etiqueta">Qué es PoliCampo</span>
+        <p class="que-es-frase">
+            Un sistema web que convierte tu finca
+            <img class="pildora-foto" src="{% static 'img/huerta.jpg' %}" alt="">
+            en un paisaje con más flores
+            <img class="pildora-foto" src="{% static 'img/portada.jpg' %}" alt="">
+            y más polinizadores
+            <img class="pildora-foto" src="{% static 'img/abeja.jpg' %}" alt="">,
+            con recomendaciones claras y basadas en ciencia.
+        </p>
+        <p class="que-es-detalle">
+            Cargás los datos de tu terreno y tus cultivos, y PoliCampo te devuelve un diagnóstico de
+            biodiversidad, una propuesta de rediseño con las especies adecuadas para tu zona y un
+            calendario para saber qué hacer en cada momento del año.
+        </p>
+    </div>
+</section>
+
+{# ============================== BENEFICIOS ============================== #}
+<section class="seccion seccion-pegada" id="beneficios">
+    <div class="contenedor">
+        <div class="encabezado-centrado">
+            <span class="etiqueta">Beneficios</span>
+            <h2 class="seccion-titulo">Lo que ganás con las franjas florales</h2>
+            <p class="seccion-bajada">Pequeños cambios en el diseño del terreno que mejoran la producción y cuidan el ambiente.</p>
+        </div>
+
+        <div class="grilla grilla-2 grilla-4">
+            <article class="tarjeta-beneficio">
+                <span class="icono">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="13" rx="4" ry="5.5"/><path d="M8 11.5h8M8.4 15h7.2M12 7.5V5M9.5 4l2.5 1 2.5-1"/><path d="M8.5 10C5 9 3 6.5 4 5s4 .5 5 3M15.5 10c3.5-1 5.5-3.5 4.5-5s-4 .5-5 3"/></svg>
+                </span>
+                <h3>Más polinización</h3>
+                <p>Las flores atraen abejas y otros polinizadores que mejoran el cuajado, el tamaño y la forma de los frutos.</p>
+            </article>
+            <article class="tarjeta-beneficio">
+                <span class="icono">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
+                </span>
+                <h3>Control natural de plagas</h3>
+                <p>Las plantas de servicio dan refugio a insectos benéficos que se alimentan de las plagas del cultivo.</p>
+            </article>
+            <article class="tarjeta-beneficio">
+                <span class="icono">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/><path d="M5 5l14 14"/></svg>
+                </span>
+                <h3>Menos agroquímicos</h3>
+                <p>Con más control biológico, se reduce la necesidad de pesticidas y de servicios externos, y bajan los costos.</p>
+            </article>
+            <article class="tarjeta-beneficio">
+                <span class="icono">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21v-8"/><path d="M12 13c0-4 3-7 8-7 0 5-3 8-8 7z"/><path d="M12 15c0-3-2.5-5.5-7-5.5 0 4 2.5 6.5 7 5.5z"/></svg>
+                </span>
+                <h3>Recuperás biodiversidad</h3>
+                <p>Los corredores florales conectan hábitats y ayudan a que la flora y la fauna vuelvan de forma natural.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+{# ============================== CÓMO FUNCIONA ============================== #}
+<section class="seccion" id="como-funciona">
+    <div class="contenedor">
+        <div class="como-funciona seccion">
+            <div class="como-grilla">
+                <img class="como-foto" src="{% static 'img/huerta.jpg' %}" alt="Huerta con hileras de verduras y plantas" loading="lazy">
+                <div>
+                    <span class="etiqueta">Cómo funciona</span>
+                    <h2 class="seccion-titulo">De tu finca a un plan, en cuatro pasos</h2>
+                    <ol class="pasos">
+                        <li class="paso">
+                            <span class="paso-numero">1</span>
+                            <div>
+                                <h3>Registrás tu finca</h3>
+                                <p>Cargás el terreno, el cultivo y las condiciones del lugar con un formulario o dibujando un croquis.</p>
+                            </div>
+                        </li>
+                        <li class="paso">
+                            <span class="paso-numero">2</span>
+                            <div>
+                                <h3>Recibís un diagnóstico</h3>
+                                <p>El sistema identifica faltas de biodiversidad y las zonas aptas para intervenir.</p>
+                            </div>
+                        </li>
+                        <li class="paso">
+                            <span class="paso-numero">3</span>
+                            <div>
+                                <h3>Obtenés una propuesta de rediseño</h3>
+                                <p>Alternativas para ubicar corredores florales y las plantas de servicio compatibles con tu cultivo.</p>
+                            </div>
+                        </li>
+                        <li class="paso">
+                            <span class="paso-numero">4</span>
+                            <div>
+                                <h3>Planificás y descargás tu informe</h3>
+                                <p>Un calendario de siembra, mantenimiento y floración, y un informe técnico para compartir.</p>
+                            </div>
+                        </li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{# ============================== VENTAJAS DEL SISTEMA ============================== #}
+{# Franja verde oscura con 4 ventajas concretas: ícono, palabra clave, título y descripción. #}
+<section class="seccion seccion-pegada" id="ventajas">
+    <div class="contenedor">
+        <div class="ventajas-caja">
+            <article class="ventaja">
+                <svg class="ventaja-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><path d="M15 4v4M9 10v4M17 16v4"/></svg>
+                <span class="ventaja-clave">Personalizado</span>
+                <h3>Adaptado a tu finca</h3>
+                <p>Cada propuesta considera las características de tu terreno y tus cultivos.</p>
+            </article>
+            <article class="ventaja">
+                <svg class="ventaja-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2V6z"/><path d="M9 4v14M15 6v14"/></svg>
+                <span class="ventaja-clave">Visual</span>
+                <h3>Rediseñá tu terreno</h3>
+                <p>Explorá alternativas para organizar los espacios de biodiversidad.</p>
+            </article>
+            <article class="ventaja">
+                <svg class="ventaja-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01"/></svg>
+                <span class="ventaja-clave">Organizado</span>
+                <h3>Planificá cada etapa</h3>
+                <p>Consultá las actividades y temporadas de tus plantas de servicio.</p>
+            </article>
+            <article class="ventaja">
+                <svg class="ventaja-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"/><path d="M14 3v5h5M12 11v6M9.5 14.5 12 17l2.5-2.5"/></svg>
+                <span class="ventaja-clave">Descargable</span>
+                <h3>Llevate tu informe</h3>
+                <p>Conservá y compartí los resultados de tu diagnóstico y rediseño.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+{# ============================== PARA QUIÉN ES ============================== #}
+<section class="seccion seccion-pegada" id="para-quien">
+    <div class="contenedor">
+        <span class="etiqueta">Para quién es</span>
+        <h2 class="seccion-titulo">Hecho para quienes trabajan la tierra en Jujuy</h2>
+
+        <div class="publico">
+            <article class="publico-tarjeta">
+                <h3>Productores</h3>
+                <p>Pequeños y medianos productores que quieren mejorar su rendimiento, reducir costos en insumos y avanzar hacia una producción agroecológica, con una guía práctica paso a paso.</p>
+            </article>
+            <article class="publico-tarjeta">
+                <h3>Ingenieros agrónomos</h3>
+                <p>Profesionales que asesoran fincas y necesitan diagnósticos ordenados, propuestas fundamentadas e informes técnicos para compartir con productores e instituciones.</p>
+            </article>
+            <div class="publico-cultivos">
+                <img src="{% static 'img/frutilla.jpg' %}" alt="Frutilla madura en la planta" loading="lazy">
+                <div>
+                    <h3>Cultivos que más se benefician</h3>
+                    <p class="seccion-bajada">Los cultivos intensivos que dependen de la polinización son los que más aprovechan las franjas florales.</p>
+                    <ul class="chips">
+                        <li>Frutilla</li>
+                        <li>Durazno</li>
+                        <li>Tomate</li>
+                        <li>Pimiento</li>
+                        <li>Palta</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{# ============================== RESPALDO CIENTÍFICO ============================== #}
+<section class="seccion seccion-pegada" id="respaldo">
+    <div class="contenedor">
+        <div class="respaldo-caja">
+            <div>
+                <span class="etiqueta">Respaldo científico</span>
+                <h2 class="seccion-titulo">Recomendaciones basadas en ciencia, no en suposiciones</h2>
+                <p>
+                    Los paisajes agrícolas que combinan producción con espacios de vegetación natural
+                    (franjas florales, borduras y corredores) sostienen más polinizadores e insectos benéficos.
+                    Eso se traduce en mejor polinización, menos plagas y sistemas más estables frente al clima.
+                </p>
+                <p>
+                    PoliCampo aplica reglas agronómicas definidas y validadas por especialistas. Por eso cada
+                    recomendación es clara, se puede rastrear y está adaptada a las especies disponibles en Jujuy.
+                </p>
+            </div>
+            <aside class="libro">
+                <span class="libro-etiqueta">Referencia principal</span>
+                <h3>Paisajes agrícolas multifuncionales: de la ciencia a la práctica</h3>
+                <p>Lucas A. Garibaldi, Paula F. Zermoglio, Facundo J. Oddi y Lucas J. Andreoni.</p>
+            </aside>
+        </div>
+    </div>
+</section>
+
+{# ============================== EQUIPO, CONTACTO Y CIERRE ============================== #}
+<section class="seccion seccion-pegada" id="contacto">
+    <div class="contenedor">
+        <div class="cierre-caja">
+            <div>
+                <span class="etiqueta">Empezá hoy</span>
+                <h2 class="seccion-titulo">Diseñemos juntos una finca con más vida</h2>
+                <p class="seccion-bajada">Creá tu cuenta, cargá tu finca y recibí tu primera propuesta de rediseño.</p>
+                <div class="cierre-botones">
+                    {% if user.is_authenticated %}
+                        <span class="saludo">Ya iniciaste sesión como <strong>{{ user.username }}</strong>.</span>
+                    {% else %}
+                        <a href="{% url 'usuarios:registro' %}" class="boton boton-acento">Crear cuenta</a>
+                        <a href="{% url 'usuarios:login' %}" class="boton boton-secundario">Ya tengo cuenta</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="equipo">
+                <h3>Quiénes somos</h3>
+                <p>Somos un grupo de alumnos de la Facultad de Ingeniería de la Universidad Nacional de Jujuy (UNJu).</p>
+                {# TODO: email provisorio, reemplazar cuando el grupo tenga uno real. #}
+                <p>Escribinos a <a href="mailto:contacto@policampo.com.ar">contacto@policampo.com.ar</a></p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
