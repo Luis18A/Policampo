@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo Espacial - Delimitación de Terrenos</title>
+    
+    <!-- CSS de Leaflet y Leaflet-Geoman -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/@geoman-io/leaflet-geoman-free@2.14.2/dist/leaflet-geoman.css" />
+    
+    <style>
+        body { margin: 0; padding: 0; font-family: sans-serif; }
+        #mapa { width: 100vw; height: 100vh; }
+        
+        /* Panel flotante provisional para ver los datos que vas a exportar a otros módulos */
+        #panel-datos {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="panel-datos">
+        <h3>Datos Capturados</h3>
+        <p>Polígonos dibujados: <span id="contador">0</span></p>
+        <button onclick="exportarGeoJSON()">Ver GeoJSON en Consola</button>
+    </div>
+
+    <div id="mapa"></div>
+
+    <!-- Scripts de Leaflet y Leaflet-Geoman -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/@geoman-io/leaflet-geoman-free@2.14.2/dist/leaflet-geoman.min.js"></script>
+
+    <script>
+        // 1. Inicializar el mapa centrado en Jujuy
+        const map = L.map('mapa').setView([-24.185, -65.299], 12);
+
+        // 2. Cargar capa satelital (Esri World Imagery es excelente para ver zonas agrícolas)
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri'
+        }).addTo(map);
+
+        // 3. Habilitar las herramientas de dibujo de Geoman
+        map.pm.addControls({
+            position: 'topleft',
+            drawMarker: false,
+            drawCircleMarker: false,
+            drawPolyline: false,
+            drawRectangle: true,
+            drawPolygon: true,
+            drawCircle: false,
+            editMode: true,
+            dragMode: true,
+            cutPolygon: false,
+            removalMode: true,
+        });
+
+        // 4. Lógica para capturar lo que el usuario dibuja
+        let capaPoligonos = L.featureGroup().addTo(map);
+        let contador = 0;
+
+        map.on('pm:create', (e) => {
+            const capa = e.layer;
+            capaPoligonos.addLayer(capa);
+            
+            // Preguntar al usuario qué está delimitando para clasificar el polígono
+            const tipo = prompt("¿Qué representa esta área? (Ej: Contorno Principal, Cultivo de Caña, Cultivo de Tabaco)");
+            
+            // Guardamos el tipo de cultivo en las propiedades espaciales
+            capa.feature = capa.feature || { type: 'Feature', properties: {} };
+            capa.feature.properties.tipo = tipo || "No especificado";
+
+            // Cambiar el color si es el contorno vs un cultivo interno
+            if(tipo && tipo.toLowerCase().includes("contorno")) {
+                capa.setStyle({ color: 'yellow', fillOpacity: 0.1 });
+            } else {
+                capa.setStyle({ color: 'green', fillOpacity: 0.4 });
+            }
+
+            // Actualizar la interfaz
+            contador++;
+            document.getElementById('contador').innerText = contador;
+            
+            // Evento click sobre el polígono para ver qué es
+            capa.bindPopup(`<b>Zonificación:</b> ${capa.feature.properties.tipo}`);
+        });
+
+        map.on('pm:remove', (e) => {
+            contador--;
+            document.getElementById('contador').innerText = contador;
+        });
+
+        // 5. Función para exportar los datos (Esto es lo que consumirán los módulos de tus compañeros)
+        function exportarGeoJSON() {
+            const datos = capaPoligonos.toGeoJSON();
+            console.log("Datos listos para enviar al backend o al formulario:", datos);
+            alert("Revisa la consola del navegador para ver el GeoJSON generado.");
+        }
+    </script>
+</body>
+</html>

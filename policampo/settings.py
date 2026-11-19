@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'calendario',  # <-- Agrega esta línea
+    'mapa',
 ]
 
 MIDDLEWARE = [
