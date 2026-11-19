@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+
+{% block title %}Diagnóstico de Biodiversidad - PoliCampo{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <!-- Encabezado de la Pantalla -->
+    <header class="d-flex flex-wrap justify-content-between align-items-center pb-3 mb-4 border-bottom">
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                    <i class="bi bi-shield-check me-1"></i> Módulo de Diagnóstico
+                </span>
+                <span class="text-muted small">ID Diagnóstico: #{{ diagnostico.id_diagnostico }}</span>
+            </div>
+            <h1 class="h2 fw-bold mt-1 text-slate-800">Diagnóstico Espacial y Déficit de Biodiversidad</h1>
+            <p class="text-muted mb-0">Evaluación agronómica de la cobertura floral y zonas de refugio ecológico en la finca.</p>
+        </div>
+        
+        <div class="d-flex gap-2 mt-3 mt-md-0">
+            <!-- Modal para recalcular o simular nuevo diagnóstico -->
+            <button type="button" class="btn btn-outline-secondary d-flex align-items-center gap-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalRecalcular">
+                <i class="bi bi-sliders"></i> Recalcular Parámetros
+            </button>
+            {% if propuesta_activa %}
+            <a href="{% url 'informe' %}" class="btn btn-success d-flex align-items-center gap-2 shadow-sm">
+                <span>Ver Informe de Rediseño</span>
+                <i class="bi bi-arrow-right"></i>
+            </a>
+            {% endif %}
+        </div>
+    </header>
+
+    {% if not diagnostico %}
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> No se encontraron registros de diagnóstico. Por favor carga los datos iniciales.
+    </div>
+    {% else %}
+
+    <!-- Fila 1: Resumen de la Finca y Cultivo Actual -->
+    <div class="row g-4 mb-4">
+        <!-- Ficha de la Finca -->
+        <div class="col-lg-7">
+            <article class="card card-agro h-100 p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <span class="text-uppercase text-muted fw-semibold small">Finca Registrada</span>
+                        <h2 class="h4 fw-bold mb-0 text-success">{{ diagnostico.finca.nombre }}</h2>
+                    </div>
+                    <span class="badge bg-light text-dark border px-3 py-2">
+                        <i class="bi bi-geo-alt text-danger me-1"></i> {{ diagnostico.finca.ubicacion }}
+                    </span>
+                </div>
+
+                <div class="row g-3 py-2">
+                    <div class="col-6 col-md-3">
+                        <div class="p-2 border rounded bg-light">
+                            <span class="text-muted small d-block">Superficie Total</span>
+                            <strong class="fs-5">{{ diagnostico.superficie_total }} ha</strong>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-2 border rounded bg-light">
+                            <span class="text-muted small d-block">Tipo de Suelo</span>
+                            <span class="fw-semibold text-truncate d-block" title="{{ diagnostico.finca.tipo_suelo }}">{{ diagnostico.finca.tipo_suelo }}</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-2 border rounded bg-light">
+                            <span class="text-muted small d-block">Sistema de Riego</span>
+                            <span class="fw-semibold text-truncate d-block" title="{{ diagnostico.finca.capacidad_riego }}">{{ diagnostico.finca.capacidad_riego }}</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-2 border rounded bg-light">
+                            <span class="text-muted small d-block">Pendiente</span>
+                            <span class="fw-semibold text-truncate d-block">{{ diagnostico.finca.pendiente }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 pt-3 border-top small text-muted d-flex justify-content-between">
+                    <span><i class="bi bi-droplet me-1"></i> Agua: {{ diagnostico.finca.disponibilidad_agua }}</span>
+                    <span><i class="bi bi-cloud-rain me-1"></i> Precipitación: {{ diagnostico.finca.precipitacion_anual }} mm/año</span>
+                </div>
+            </article>
+        </div>
+
+        <!-- Ficha del Cultivo Comercial Principal -->
+        <div class="col-lg-5">
+            <article class="card card-agro h-100 p-4">
+                <span class="text-uppercase text-muted fw-semibold small mb-1">Cultivo Comercial Actual</span>
+                {% if cultivos_asociados %}
+                    {% with c=cultivos_asociados.0 %}
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h2 class="h4 fw-bold mb-0 text-dark">
+                            <i class="bi bi-basket2 text-danger me-2"></i>{{ c.cultivo.nombre }}
+                        </h2>
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                            {{ c.superficie_ocupada }} ha ocupadas
+                        </span>
+                    </div>
+                    <p class="text-muted small mb-3">Variedad: <em>{{ c.cultivo.variedad|default:"Estándar" }}</em></p>
+
+                    <ul class="list-group list-group-flush small">
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <span class="text-muted"><i class="bi bi-calendar3 me-1"></i> Floración comercial:</span>
+                            <strong>{{ c.cultivo.periodo_florecimiento }}</strong>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <span class="text-muted"><i class="bi bi-bug me-1"></i> Tipo de polinización:</span>
+                            <span class="text-end fw-semibold text-dark">{{ c.cultivo.tipo_polinizacion }}</span>
+                        </li>
+                        <li class="list-group-item px-0 py-2">
+                            <span class="text-muted d-block mb-1"><i class="bi bi-info-circle me-1"></i> Impacto de polinizadores:</span>
+                            <div class="alert alert-secondary py-1 px-2 mb-0" style="font-size: 0.82rem;">
+                                {{ c.cultivo.requerimiento_polinizacion }}
+                            </div>
+                        </li>
+                    </ul>
+                    {% endwith %}
+                {% else %}
+                    <p class="text-muted">No se registraron cultivos comerciales en esta parcela.</p>
+                {% endif %}
+            </article>
+        </div>
+    </div>
+
+    <!-- Fila 2: Métricas Centrales de Biodiversidad y Semáforo -->
+    <section class="mb-4">
+        <div class="row g-3">
+            <!-- Cobertura Actual -->
+            <div class="col-md-3">
+                <div class="metric-card shadow-sm {% if diagnostico.porcentaje_floral_actual < 10 %}danger{% else %}warning{% endif %}">
+                    <span class="text-muted small text-uppercase fw-semibold">Cobertura Floral Actual</span>
+                    <div class="d-flex align-items-baseline gap-2 mt-2">
+                        <span class="metric-value text-danger">{{ diagnostico.porcentaje_floral_actual }}%</span>
+                        <span class="text-muted">({{ diagnostico.superficie_floral_actual }} ha)</span>
+                    </div>
+                    <div class="small text-danger mt-1">
+                        <i class="bi bi-dash-circle-fill"></i> Nivel insuficiente
+                    </div>
+                </div>
+            </div>
+
+            <!-- Objetivo Agroecológico (Regla del 20%) -->
+            <div class="col-md-3">
+                <div class="metric-card shadow-sm">
+                    <span class="text-muted small text-uppercase fw-semibold">Estándar Agronómico</span>
+                    <div class="d-flex align-items-baseline gap-2 mt-2">
+                        <span class="metric-value text-success">{{ diagnostico.porcentaje_recomendado }}%</span>
+                        <span class="text-muted">recomendado</span>
+                    </div>
+                    <div class="small text-success mt-1">
+                        <i class="bi bi-check-circle-fill"></i> Regla del 20% para biodiversidad
+                    </div>
+                </div>
+            </div>
+
+            <!-- Déficit Calculado -->
+            <div class="col-md-3">
+                <div class="metric-card shadow-sm danger">
+                    <span class="text-muted small text-uppercase fw-semibold">Déficit de Biodiversidad</span>
+                    <div class="d-flex align-items-baseline gap-2 mt-2">
+                        <span class="metric-value text-danger">-{{ diagnostico.deficit_biodiversidad }}%</span>
+                    </div>
+                    <div class="small text-danger mt-1">
+                        <i class="bi bi-exclamation-octagon-fill"></i> Brecha a compensar
+                    </div>
+                </div>
+            </div>
+
+            <!-- Superficie Floral Requerida -->
+            <div class="col-md-3">
+                <div class="metric-card shadow-sm warning">
+                    <span class="text-muted small text-uppercase fw-semibold">Superficie Floral a Incorporar</span>
+                    <div class="d-flex align-items-baseline gap-2 mt-2">
+                        <span class="metric-value text-warning">{{ diagnostico.superficie_requerida_ha }} ha</span>
+                    </div>
+                    <div class="small text-muted mt-1">
+                        <i class="bi bi-layers-fill text-warning"></i> En franjas y bordes
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Fila 3: Barra de Comparación Visual y Semáforo -->
+    <div class="card card-agro p-4 mb-4">
+        <h3 class="h5 fw-bold mb-3 d-flex align-items-center gap-2">
+            <i class="bi bi-bar-chart-steps text-success"></i>
+            Estado de Conservación y Balance del Terreno
+        </h3>
+
+        <!-- Barra de Progreso Semántica HTML5 -->
+        <div class="mb-2">
+            <div class="d-flex justify-content-between text-muted small mb-1">
+                <span>0%</span>
+                <span class="fw-bold text-danger">Actual: {{ diagnostico.porcentaje_floral_actual }}%</span>
+                <span class="fw-bold text-success">Objetivo Agroecológico: {{ diagnostico.porcentaje_recomendado }}%</span>
+                <span>100%</span>
+            </div>
+            
+            <div class="progress" style="height: 24px;" role="meter" aria-valuenow="{{ diagnostico.porcentaje_floral_actual }}" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-bar bg-danger fw-bold" role="progressbar" style="width: {{ diagnostico.porcentaje_floral_actual }}%">
+                    {{ diagnostico.porcentaje_floral_actual }}%
+                </div>
+                <div class="progress-bar bg-warning progress-bar-striped progress-bar-animated" role="progressbar" style="width: {{ diagnostico.deficit_biodiversidad }}%">
+                    Déficit: {{ diagnostico.deficit_biodiversidad }}%
+                </div>
+                <div class="progress-bar bg-light text-muted border-start" role="progressbar" style="width: 77%">
+                    Área Cultivo Comercial ({{ diagnostico.superficie_total }} ha)
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center justify-content-between mt-3 pt-2 border-top">
+            <div class="d-flex align-items-center gap-2">
+                <span class="fw-bold">Nivel de Riesgo del Agroecosistema:</span>
+                {% if diagnostico.nivel_riesgo == 'CRITICO' %}
+                    <span class="badge bg-danger px-3 py-2 fs-6"><i class="bi bi-exclamation-triangle-fill me-1"></i> CRÍTICO</span>
+                {% elif diagnostico.nivel_riesgo == 'MODERADO' %}
+                    <span class="badge bg-warning text-dark px-3 py-2 fs-6"><i class="bi bi-exclamation-circle-fill me-1"></i> MODERADO</span>
+                {% else %}
+                    <span class="badge bg-success px-3 py-2 fs-6"><i class="bi bi-check-circle-fill me-1"></i> ADECUADO</span>
+                {% endif %}
+            </div>
+
+            <span class="text-muted small">
+                Evaluado bajo criterios técnicos de infraestructura ecológica (INTA / Agroecología).
+            </span>
+        </div>
+    </div>
+
+    <!-- Fila 4: Diagnóstico Agroecológico y Áreas Aptas para Intervención -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card card-agro h-100 p-4 border-start border-danger border-4">
+                <h3 class="h5 fw-bold text-dark d-flex align-items-center gap-2">
+                    <i class="bi bi-clipboard2-pulse text-danger"></i>
+                    Diagnóstico Técnico de Vulnerabilidad
+                </h3>
+                <p class="text-muted mt-2 mb-3" style="line-height: 1.6;">
+                    {{ diagnostico.observaciones }}
+                </p>
+                
+                <div class="p-3 bg-danger-subtle rounded border border-danger-subtle small text-danger-emphasis">
+                    <strong><i class="bi bi-shield-slash-fill me-1"></i> Principales riesgos identificados:</strong>
+                    <ul class="mb-0 mt-1 ps-3">
+                        <li>Falta de refugio permanente para insectos benéficos (sirfidos, crisopas, microavispas).</li>
+                        <li>Desbalance depredador/presa con alta dependencia de insecticidas de síntesis.</li>
+                        <li>Ventana de floración descubierta en momentos críticos de polinización del cultivo.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card card-agro h-100 p-4 border-start border-success border-4">
+                <h3 class="h5 fw-bold text-dark d-flex align-items-center gap-2">
+                    <i class="bi bi-compass text-success"></i>
+                    Zonas Aptas Identificadas para Intervención
+                </h3>
+                <p class="text-muted mt-2 mb-3" style="line-height: 1.6;">
+                    El análisis espacial del terreno identifica los siguientes sectores viables para la incorporación de bandas florales sin sacrificar área productiva principal:
+                </p>
+
+                <div class="p-3 bg-success-subtle rounded border border-success-subtle small text-success-emphasis mb-3">
+                    <strong><i class="bi bi-check2-circle me-1"></i> Ubicación recomendada:</strong>
+                    <p class="mb-0 mt-1">{{ diagnostico.areas_aptas }}</p>
+                </div>
+
+                <div class="d-flex justify-content-end mt-auto">
+                    {% if propuesta_activa %}
+                    <a href="{% url 'informe' %}" class="btn btn-success btn-lg w-100 shadow-sm d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-file-earmark-check"></i>
+                        <span>Generar Propuesta de Rediseño e Informe</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+
+</div>
+
+<!-- Modal para Recalcular o Simular Diagnóstico -->
+<div class="modal fade" id="modalRecalcular" tabindex="-1" aria-labelledby="modalRecalcularLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'diagnostico' %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="modalRecalcularLabel">
+                        <i class="bi bi-sliders text-success me-2"></i> Simular Diagnóstico con Reglas Agronómicas
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">Modifica los parámetros del terreno para ver cómo responde el motor de diagnóstico y la regla del 20%.</p>
+                    
+                    <div class="mb-3">
+                        <label for="finca_id" class="form-label fw-semibold">Finca:</label>
+                        <select class="form-select" id="finca_id" name="finca_id" required>
+                            {% for f in fincas %}
+                                <option value="{{ f.id_finca }}" {% if diagnostico and diagnostico.finca.id_finca == f.id_finca %}selected{% endif %}>
+                                    {{ f.nombre }} ({{ f.ubicacion }} - {{ f.superficie }} ha)
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="superficie_total" class="form-label fw-semibold">Superficie Total del Terreno (ha):</label>
+                        <input type="number" step="0.1" class="form-control" id="superficie_total" name="superficie_total" value="{{ diagnostico.superficie_total|default:10.0 }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="superficie_floral" class="form-label fw-semibold">Superficie Actual con Bandas Florales / Refugio (ha):</label>
+                        <input type="number" step="0.05" class="form-control" id="superficie_floral" name="superficie_floral" value="{{ diagnostico.superficie_floral_actual|default:0.3 }}" required>
+                        <div class="form-text">Si actualmente el campo no cuenta con franjas de servicio, ingresar 0.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-calculator me-1"></i> Calcular Diagnóstico
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

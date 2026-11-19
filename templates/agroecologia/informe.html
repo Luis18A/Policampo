@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block title %}{{ informe.codigo_informe }} - Informe Técnico de Rediseño{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Diagrama visual del terreno con CSS */
+    .field-layout {
+        background: #f1f8e9;
+        border: 2px dashed #81c784;
+        border-radius: 8px;
+        position: relative;
+        padding: 1.5rem;
+        min-height: 240px;
+    }
+    .field-strip-border {
+        background: #c8e6c9;
+        border: 1px solid #4caf50;
+        border-radius: 4px;
+        padding: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #1b5e20;
+        text-align: center;
+    }
+    .field-crop-block {
+        background: #fff3e0;
+        border: 1px solid #ffb74d;
+        border-radius: 6px;
+        padding: 1rem;
+        text-align: center;
+        color: #e65100;
+    }
+    .badge-comp-5 {
+        background-color: #dcfce7;
+        color: #15803d;
+        font-weight: 700;
+        border: 1px solid #bbf7d0;
+    }
+    .badge-comp-4 {
+        background-color: #ecfdf5;
+        color: #047857;
+        font-weight: 700;
+        border: 1px solid #a7f3d0;
+    }
+    .timeline-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background-color: #22c55e;
+        display: inline-block;
+    }
+    @media print {
+        .field-layout {
+            border: 2px solid #666 !important;
+            background: #fff !important;
+        }
+        .field-crop-block {
+            border: 1px solid #999 !important;
+            background: #fafafa !important;
+        }
+        .field-strip-border {
+            border: 1px solid #666 !important;
+            background: #eee !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-2">
+
+    <!-- Barra de Acciones Superior (Oculta en Impresión) -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom no-print">
+        <a href="{% url 'diagnostico' %}" class="btn btn-outline-secondary d-flex align-items-center gap-1">
+            <i class="bi bi-arrow-left"></i>
+            <span>Volver al Diagnóstico</span>
+        </a>
+
+        <div class="d-flex gap-2">
+            <button onclick="window.print()" class="btn btn-success d-flex align-items-center gap-2 shadow-sm">
+                <i class="bi bi-printer-fill"></i>
+                <span>Descargar Informe PDF / Imprimir</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Documento Técnico Principal -->
+    <article class="card card-agro p-4 p-md-5 mb-5 bg-white">
+
+        <!-- Encabezado del Informe -->
+        <header class="border-bottom pb-4 mb-4">
+            <div class="row align-items-center">
+                <div class="col-8">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge bg-dark px-3 py-1 text-uppercase">{{ informe.codigo_informe }}</span>
+                        <span class="text-muted small">Emisión: {{ informe.fecha_emision|date:"d/m/Y - H:i" }}</span>
+                    </div>
+                    <h1 class="h3 fw-bold text-dark mb-1">{{ informe.titulo }}</h1>
+                    <p class="text-muted mb-0">Sistema de Apoyo a la Toma de Decisiones - PoliCampo (Jujuy)</p>
+                </div>
+                <div class="col-4 text-end">
+                    <div class="d-inline-flex flex-column align-items-end">
+                        <span class="fw-bold text-success fs-5"><i class="bi bi-flower2"></i> PoliCampo</span>
+                        <span class="text-muted small">Rediseño Agroecológico</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Datos Generales de la Finca y el Terreno -->
+            <div class="row g-2 mt-3 pt-3 border-top bg-light p-3 rounded">
+                <div class="col-md-3 col-6">
+                    <span class="text-muted small d-block">Finca / Parcela:</span>
+                    <strong>{{ finca.nombre }}</strong>
+                </div>
+                <div class="col-md-3 col-6">
+                    <span class="text-muted small d-block">Ubicación:</span>
+                    <strong>{{ finca.ubicacion }}</strong>
+                </div>
+                <div class="col-md-3 col-6">
+                    <span class="text-muted small d-block">Superficie Total:</span>
+                    <strong>{{ finca.superficie }} ha</strong>
+                </div>
+                <div class="col-md-3 col-6">
+                    <span class="text-muted small d-block">Cultivo Comercial:</span>
+                    <strong>Tomate Redondo (9.7 ha)</strong>
+                </div>
+            </div>
+        </header>
+
+        <!-- 1. Resumen Ejecutivo del Rediseño -->
+        <section class="mb-5">
+            <h2 class="h5 fw-bold text-success border-bottom pb-2 mb-3 d-flex align-items-center gap-2">
+                <i class="bi bi-card-checklist"></i> 1. Resumen Ejecutivo de la Intervención
+            </h2>
+            <p class="text-secondary" style="line-height: 1.7;">
+                {{ informe.resumen_ejecutivo }}
+            </p>
+
+            <div class="row g-3 my-2">
+                <div class="col-md-4">
+                    <div class="p-3 border rounded text-center bg-light">
+                        <span class="text-muted small d-block">Estado Inicial (Deficitario)</span>
+                        <strong class="fs-4 text-danger">{{ diagnostico.porcentaje_floral_actual }}%</strong>
+                        <span class="d-block small text-muted">({{ diagnostico.superficie_floral_actual }} ha actuales)</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 border rounded text-center bg-light">
+                        <span class="text-muted small d-block">Superficie a Incorporar</span>
+                        <strong class="fs-4 text-warning">+{{ propuesta.superficie_propuesta_ha }} ha</strong>
+                        <span class="d-block small text-muted">(Bandas florales y bordes)</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 border rounded text-center bg-light border-success">
+                        <span class="text-muted small d-block">Estado Proyectado (Meta)</span>
+                        <strong class="fs-4 text-success">{{ propuesta.porcentaje_recuperado }}%</strong>
+                        <span class="d-block small text-success fw-semibold">Estándar agroecológico alcanzado</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Esquema Espacial de Rediseño -->
+        <section class="mb-5">
+            <h2 class="h5 fw-bold text-success border-bottom pb-2 mb-3 d-flex align-items-center gap-2">
+                <i class="bi bi-grid-3x3-gap"></i> 2. Esquema Espacial y Distribución en el Lote
+            </h2>
+            <p class="text-secondary mb-3">
+                <strong>Tipo de estructura:</strong> {{ propuesta.tipo_estructura }}<br>
+                <strong>Detalle de distribución:</strong> {{ propuesta.disposicion_espacial }}
+            </p>
+
+            <!-- Croquis esquemático visual del terreno -->
+            <div class="field-layout my-3">
+                <div class="d-flex justify-content-between mb-2">
+                    <div class="field-strip-border w-100 me-2">
+                        CABECERA NORTE: Banda Floral Fija (Caléndula + Trébol) [300 m x 5 m]
+                    </div>
+                </div>
+
+                <div class="row g-2 my-2 align-items-center">
+                    <div class="col-10">
+                        <div class="field-crop-block mb-2">
+                            <strong>LOTE PRODUCTIVO - SECTOR 1 (Tomate Redondo)</strong>
+                        </div>
+                        <div class="field-strip-border my-2 bg-success text-white">
+                            CORREDOR BIOLÓGICO TRANSVERSAL INTERMEDIO (Borraja + Caléndula) [3m]
+                        </div>
+                        <div class="field-crop-block mt-2">
+                            <strong>LOTE PRODUCTIVO - SECTOR 2 (Tomate Redondo)</strong>
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <div class="field-strip-border h-100 d-flex align-items-center justify-content-center p-2" style="min-height: 140px;">
+                            BORDE MULTIFUNCIONAL ESTE (Vicia + Refugio Permanente) [800m x 4m]
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field-strip-border w-100 mt-2">
+                    CABECERA SUR: Franja Floral de Retención y Drenaje [300 m x 5 m]
+                </div>
+            </div>
+            <p class="small text-muted text-center mt-2 fst-italic">
+                Esquema de distribución territorial optimizado para maximizar el radio de acción de polinizadores (30-50m) en todo el cultivo de tomate.
+            </p>
+        </section>
+
+        <!-- 3. Tabla de Plantas de Servicio Recomendadas -->
+        <section class="mb-5">
+            <h2 class="h5 fw-bold text-success border-bottom pb-2 mb-3 d-flex align-items-center gap-2">
+                <i class="bi bi-flower1"></i> 3. Especies Recomendadas y Matriz de Compatibilidad
+            </h2>
+            <p class="text-secondary small mb-3">
+                Selección agronómica de plantas de servicio según períodos de floración, resistencia hídrica local en Jujuy y grado de sinergia con el cultivo de tomate:
+            </p>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle border">
+                    <thead class="table-light small">
+                        <tr>
+                            <th>Especie / Nombre Científico</th>
+                            <th class="text-center">% en Mezcla</th>
+                            <th class="text-center">Compatibilidad</th>
+                            <th>Ventana de Floración</th>
+                            <th>Manejo / Riego</th>
+                            <th>Servicio Ecosistémico Principal</th>
+                        </tr>
+                    </thead>
+                    <tbody class="small">
+                        {% for item in especies_detalle %}
+                        <tr>
+                            <td>
+                                <strong class="d-block text-dark">{{ item.servicio.nombre_comun }}</strong>
+                                <span class="text-muted fst-italic">{{ item.servicio.nombre_cientifico }}</span>
+                            </td>
+                            <td class="text-center fw-bold text-primary">{{ item.item.porcentaje_en_franja }}%</td>
+                            <td class="text-center">
+                                <span class="badge {% if item.compatibilidad == 5 %}badge-comp-5{% else %}badge-comp-4{% endif %} px-2 py-1">
+                                    +{{ item.compatibilidad }} / 5
+                                </span>
+                            </td>
+                            <td>{{ item.servicio.periodo_florecimiento }}</td>
+                            <td>
+                                <span class="d-block"><strong>Agua:</strong> {{ item.servicio.necesidad_agua }}</span>
+                                <span class="text-muted d-block"><strong>Corte:</strong> {{ item.servicio.necesidad_corte }}</span>
+                            </td>
+                            <td class="text-secondary" style="max-width: 280px;">
+                                {{ item.motivo }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 4. Calendario Agroecológico -->
+        <section class="mb-5">
+            <h2 class="h5 fw-bold text-success border-bottom pb-2 mb-3 d-flex align-items-center gap-2">
+                <i class="bi bi-calendar-check"></i> 4. Calendario de Actividades Agroecológicas
+            </h2>
+            <p class="text-secondary small mb-3">
+                Secuencia cronológica de siembra, floración activa y labores culturales de corte para asegurar la coexistencia armónica de las bandas con el ciclo del tomate:
+            </p>
+
+            <div class="row g-2">
+                {% for c in meses_calendario %}
+                <div class="col-md-6">
+                    <div class="p-3 border rounded bg-light d-flex align-items-start gap-3 h-100">
+                        <span class="timeline-dot mt-1 flex-shrink-0"></span>
+                        <div>
+                            <strong class="d-block text-success">{{ c.mes }}</strong>
+                            <span class="small text-secondary">{{ c.accion }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- 5. Dictamen y Firmas -->
+        <footer class="pt-4 border-top mt-5">
+            <div class="row text-center mt-4">
+                <div class="col-6">
+                    <div class="border-top pt-2 mx-auto" style="max-width: 240px;">
+                        <span class="d-block fw-bold small">Productor Agropecuario</span>
+                        <span class="text-muted small">Firma y Aceptación</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="border-top pt-2 mx-auto" style="max-width: 240px;">
+                        <span class="d-block fw-bold small">Ingeniero Agrónomo Asesor</span>
+                        <span class="text-muted small">Validación Técnica</span>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+    </article>
+
+</div>
+{% endblock %}
