@@ -37,7 +37,12 @@
                     {% if e.cultivo_principal %}
                     <div>🌾 <strong>Cultivo principal:</strong> {{ e.cultivo_principal }}</div>
                     {% endif %}
+                    {% if e.superficie_total_ha %}
                     <div>📐 <strong>Superficie total:</strong> <strong>{{ e.superficie_total_ha|floatformat:2 }} ha</strong> ({{ e.superficie_total_m2|floatformat:0 }} m²)</div>
+                    {% else %}
+                    {# [Unificación] Finca de mapa sin contorno todavía #}
+                    <div>📐 <strong>Superficie total:</strong> se calcula al dibujar el terreno en el mapa</div>
+                    {% endif %}
                     <div>📊 <strong>Sectores:</strong> {{ e.parcelas.count }} registrados ({{ e.porcentaje_utilizado }}% ocupado)</div>
                 </div>
             </div>

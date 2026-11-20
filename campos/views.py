@@ -121,9 +121,11 @@ def establecimiento_crear(request):
     Permite seleccionar el flujo: 'superficies' (cuestionario) o 'disenador' (croquis manual).
     """
     modo = request.GET.get('modo', 'superficies')
+    # [Unificación] Por el mapa no se pide la superficie: la calcula el contorno dibujado
+    pide_superficie = (modo != 'mapa')
 
     if request.method == 'POST':
-        form = EstablecimientoForm(request.POST)
+        form = EstablecimientoForm(request.POST, pide_superficie=pide_superficie)
         if form.is_valid():
             establecimiento = form.save(commit=False)
             establecimiento.usuario = request.user  # [Integración] dueño
@@ -144,7 +146,7 @@ def establecimiento_crear(request):
             # Sigue en la pantalla del método elegido (cuestionario, croquis o mapa de Agus)
             return redirect(establecimiento.url_edicion, pk=establecimiento.pk)
     else:
-        form = EstablecimientoForm()
+        form = EstablecimientoForm(pide_superficie=pide_superficie)
 
     return render(request, 'campos/establecimiento_form.html', {
         'form': form,
@@ -161,15 +163,17 @@ def establecimiento_editar(request, pk):
     Edición de datos generales del establecimiento (incluida dirección).
     """
     establecimiento = _establecimiento_del_usuario(request, pk)
+    # [Unificación] En una finca de mapa la superficie la define el contorno, no se edita a mano
+    pide_superficie = establecimiento.metodo_caracterizacion != MetodoCaracterizacion.MAPA
 
     if request.method == 'POST':
-        form = EstablecimientoForm(request.POST, instance=establecimiento)
+        form = EstablecimientoForm(request.POST, instance=establecimiento, pide_superficie=pide_superficie)
         if form.is_valid():
             form.save()
             messages.success(request, 'Datos del establecimiento actualizados correctamente.')
             return redirect('campos:establecimiento_detalle', pk=establecimiento.pk)
     else:
-        form = EstablecimientoForm(instance=establecimiento)
+        form = EstablecimientoForm(instance=establecimiento, pide_superficie=pide_superficie)
 
     return render(request, 'campos/establecimiento_form.html', {
         'form': form,

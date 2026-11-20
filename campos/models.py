@@ -137,9 +137,14 @@ class Establecimiento(models.Model):
         default=Ecorregion.QUEBRADA,
         verbose_name="Ecorregión"
     )
+    # [Unificación] En el cuestionario y el croquis se pide al dar de alta la finca.
+    # Al entrar por el mapa NO se pide: queda vacía hasta que se dibuja el contorno,
+    # y se completa sola con el área que calcula el mapa de Agus (mapa.views.guardar_terreno).
     superficie_total_ha = models.DecimalField(
         max_digits=10,
         decimal_places=4,
+        null=True,
+        blank=True,
         validators=[MinValueValidator(Decimal('0.0001'))],
         verbose_name="Superficie total (hectáreas)"
     )
@@ -190,7 +195,8 @@ class Establecimiento(models.Model):
 
     @property
     def superficie_total_m2(self) -> Decimal:
-        return self.superficie_total_ha * Decimal('10000.0')
+        # Si todavía no hay superficie (finca de mapa sin contorno), cuenta como 0
+        return (self.superficie_total_ha or Decimal('0')) * Decimal('10000.0')
 
     @property
     def superficie_distribuida_ha(self) -> Decimal:
@@ -203,7 +209,7 @@ class Establecimiento(models.Model):
 
     @property
     def superficie_restante_ha(self) -> Decimal:
-        restante = self.superficie_total_ha - self.superficie_distribuida_ha
+        restante = (self.superficie_total_ha or Decimal('0')) - self.superficie_distribuida_ha
         return max(Decimal('0.0000'), restante)
 
     @property
@@ -269,7 +275,7 @@ class Establecimiento(models.Model):
             'localidad': self.localidad,
             'departamento': self.departamento,
             'ecorregion': self.ecorregion,
-            'superficie_total_ha': float(self.superficie_total_ha),
+            'superficie_total_ha': float(self.superficie_total_ha) if self.superficie_total_ha is not None else None,
             'superficie_total_m2': float(self.superficie_total_m2),
             'cultivo_principal': self.cultivo_principal,
             'metodo_caracterizacion': self.metodo_caracterizacion,

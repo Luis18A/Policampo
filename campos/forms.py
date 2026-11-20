@@ -64,6 +64,18 @@ class EstablecimientoForm(forms.ModelForm):
             'superficie_total_ha': 'Superficie total en hectáreas (1 ha = 10.000 m²).',
         }
 
+    def __init__(self, *args, pide_superficie=True, **kwargs):
+        """
+        [Unificación] Al entrar por el mapa no se pide la superficie total:
+        se calcula sola con el contorno que se dibuja en el mapa de Agus.
+        En el cuestionario y el croquis sí es obligatoria.
+        """
+        super().__init__(*args, **kwargs)
+        if pide_superficie:
+            self.fields['superficie_total_ha'].required = True
+        else:
+            del self.fields['superficie_total_ha']
+
     def clean_superficie_total_ha(self):
         val = self.cleaned_data.get('superficie_total_ha')
         if val is None or val <= 0:

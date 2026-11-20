@@ -311,6 +311,8 @@
         {% if terreno %}
         window.POLICAMPO_TERRENO_INICIAL = JSON.parse(document.getElementById('terreno-inicial').textContent);
         {% endif %}
+        // [Unificación] Identifica la finca: el borrador del navegador se guarda aparte para cada una
+        window.POLICAMPO_ID_FINCA = {{ establecimiento.pk|stringformat:"d" }};
         window.POLICAMPO_API_GUARDAR_PROPUESTA_URL = "{% url 'mapa:guardar_propuesta' pk=establecimiento.pk %}";
     </script>
 
@@ -319,6 +321,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
 
     <!-- 3. Scripts del módulo -->
-    <script src="{% static 'mapa/js/policampo_common.js' %}?v=10"></script>
+    <script src="{% static 'mapa/js/policampo_common.js' %}?v=11"></script>
     <script src="{% static 'mapa/js/salida_mapa.js' %}?v=10"></script>
 {% endblock %}

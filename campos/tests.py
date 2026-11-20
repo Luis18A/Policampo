@@ -314,9 +314,21 @@ class DatosDeEntradaSegunEsquemaTests(TestCase):
     def test_el_alta_pide_solo_los_datos_basicos_en_los_tres_modos(self):
         # Sin cultivo principal, agua ni largo/ancho
         basicos = {'nombre', 'direccion', 'departamento', 'localidad', 'ecorregion', 'superficie_total_ha'}
-        for modo in ('superficies', 'disenador', 'mapa'):
+        for modo in ('superficies', 'disenador'):
             url = reverse('campos:establecimiento_crear') + f'?modo={modo}'
             self.assertEqual(self.campos_del_formulario(url), basicos, modo)
+        # [Unificación] Por el mapa tampoco se pide la superficie: la calcula el contorno dibujado
+        url = reverse('campos:establecimiento_crear') + '?modo=mapa'
+        self.assertEqual(self.campos_del_formulario(url), basicos - {'superficie_total_ha'})
+
+    def test_cuestionario_y_croquis_siguen_exigiendo_la_superficie(self):
+        for modo in ('superficies', 'disenador'):
+            res = self.client.post(reverse('campos:establecimiento_crear') + f'?modo={modo}', {
+                'nombre': f'Sin superficie {modo}', 'departamento': 'Palpalá', 'localidad': 'Palpalá',
+                'ecorregion': 'Valles Templados',
+            })
+            self.assertEqual(res.status_code, 200, modo)
+            self.assertFalse(Establecimiento.objects.filter(nombre=f'Sin superficie {modo}').exists())
 
     def test_alta_por_croquis_sin_cultivo_principal(self):
         url = reverse('campos:establecimiento_crear') + '?modo=disenador'

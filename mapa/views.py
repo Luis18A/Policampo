@@ -29,6 +29,15 @@ from .models import DisenoEspacial
 # Tope de tamaño del JSON que aceptamos (2 MB)
 TAMANIO_MAXIMO_BYTES = 2 * 1024 * 1024
 
+# [Unificación] El formulario de alta (app campos) guarda la ecorregión por nombre;
+# el mapa de Agus (policampo_common.js) usa estos códigos.
+ECORREGION_A_CODIGO_MAPA = {
+    'Valles Templados': 'valles_templados',
+    'Quebrada de Humahuaca': 'quebrada',
+    'Yungas': 'yungas',
+    'Puna': 'puna',
+}
+
 
 def _leer_json(request):
     """Devuelve el JSON del cuerpo del pedido, o None si es demasiado grande o no es JSON válido."""
@@ -39,6 +48,15 @@ def _leer_json(request):
     except (ValueError, TypeError):
         return None
     return data if isinstance(data, dict) else None
+
+
+def _superficie_del_terreno(data):
+    """Superficie total (ha) que calculó el mapa, como Decimal; None si no viene o no es válida."""
+    try:
+        valor = Decimal(str((data.get('superficie') or {})['total_ha'])).quantize(Decimal('0.0001'))
+    except (KeyError, TypeError, AttributeError, InvalidOperation):
+        return None
+    return valor if 0 < valor < Decimal('1000000') else None
 
 
 # ==========================================
@@ -55,6 +73,14 @@ def registro_terreno(request, pk):
 
     return render(request, 'mapa/registro_terreno.html', {
         'establecimiento': establecimiento,
+        # [Unificación] Los datos ya cargados en el alta: completan la sección oculta del paso 1
+        'datos_finca': {
+            'nombre': establecimiento.nombre,
+            'direccion': establecimiento.direccion,
+            'departamento': establecimiento.departamento,
+            'localidad': establecimiento.localidad,
+            'ecorregion_codigo': ECORREGION_A_CODIGO_MAPA.get(establecimiento.ecorregion, ''),
+        },
     })
 
 
@@ -70,6 +96,13 @@ def guardar_terreno(request, pk):
     data = _leer_json(request)
     if data is None:
         return JsonResponse({'ok': False, 'mensaje': 'Los datos del terreno no son válidos.'}, status=400)
+
+    # [Unificación] La superficie total de una finca de mapa sale del contorno dibujado
+    # (entrada_mapa.js la manda en superficie.total_ha); no se pide en el formulario de alta.
+    superficie = _superficie_del_terreno(data)
+    if superficie is not None:
+        establecimiento.superficie_total_ha = superficie
+        establecimiento.save(update_fields=['superficie_total_ha', 'actualizado_en'])
 
     # Guardamos el JSON con valores por defecto (en cero) en los campos obligatorios:
     # las métricas reales se calculan en el paso 2 (propuesta).

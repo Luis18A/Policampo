@@ -93,7 +93,8 @@
                     {% endif %}
                 </div>
 
-                <!-- Superficie Total (ha) -->
+                <!-- Superficie Total (ha). [Unificación] Por el mapa no se pide: se calcula con el contorno -->
+                {% if form.superficie_total_ha %}
                 <div class="form-group">
                     <label class="form-label" for="{{ form.superficie_total_ha.id_for_label }}">
                         Superficie total (en Hectáreas) *
@@ -104,6 +105,7 @@
                     <span class="form-error">{{ form.superficie_total_ha.errors.0 }}</span>
                     {% endif %}
                 </div>
+                {% endif %}
 
                 {# [Unificación] Ya no se piden cultivo principal, agua ni largo/ancho estimados #}
             </div>

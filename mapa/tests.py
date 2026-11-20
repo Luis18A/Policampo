@@ -154,19 +154,71 @@ class MapaTests(TestCase):
         self.assertContains(res, reverse("campos:establecimiento_detalle", kwargs={"pk": self.finca.pk}))
         self.assertNotContains(res, self.url_terreno)
 
-    def test_nuevo_predio_en_modo_mapa_termina_en_el_registro_de_terreno(self):
+    def test_nuevo_predio_en_modo_mapa_sin_superficie_termina_en_el_registro_de_terreno(self):
+        # [Unificación] Por el mapa no se pide la superficie total
         self.client.login(username="ana", password=CONTRASENA)
         url = reverse("campos:establecimiento_crear") + "?modo=mapa"
         res = self.client.post(url, {
             "nombre": "Finca Nueva", "direccion": "Ruta 9 km 1", "departamento": "Palpalá",
-            "localidad": "Palpalá", "ecorregion": "Valles Templados", "superficie_total_ha": "2.5",
+            "localidad": "Palpalá", "ecorregion": "Valles Templados",
         })
         nueva = Establecimiento.objects.get(nombre="Finca Nueva")
         self.assertRedirects(res, reverse("mapa:registro_terreno", kwargs={"pk": nueva.pk}))
         self.assertEqual(nueva.metodo_caracterizacion, MetodoCaracterizacion.MAPA)
+        self.assertIsNone(nueva.superficie_total_ha)
+
+        # La ficha y la lista no se rompen sin superficie
+        ficha = self.client.get(reverse("campos:establecimiento_detalle", kwargs={"pk": nueva.pk}))
+        self.assertContains(ficha, "Se calcula al dibujar el terreno en el mapa")
+        lista = self.client.get(reverse("campos:establecimientos_lista"))
+        self.assertContains(lista, "se calcula al dibujar el terreno en el mapa")
+
+        # Al editar sus datos generales tampoco aparece la superficie
+        editar = self.client.get(reverse("campos:establecimiento_editar", kwargs={"pk": nueva.pk}))
+        self.assertNotIn("superficie_total_ha", editar.context["form"].fields)
+
+    def test_guardar_el_terreno_completa_la_superficie_de_la_finca(self):
+        self.client.login(username="ana", password=CONTRASENA)
+        datos = terreno()
+        datos["superficie"] = {"total_ha": 3.21, "calculada_mapa_ha": 3.21}
+        self.post_json(self.url_guardar_terreno, datos)
+        self.finca.refresh_from_db()
+        self.assertEqual(self.finca.superficie_total_ha, Decimal("3.2100"))
+
+        # Un valor raro no la pisa
+        datos["superficie"] = {"total_ha": "no es un número"}
+        self.post_json(self.url_guardar_terreno, datos)
+        self.finca.refresh_from_db()
+        self.assertEqual(self.finca.superficie_total_ha, Decimal("3.2100"))
 
     def test_el_mapa_de_sol_y_el_mapa_viejo_ya_no_existen(self):
         self.client.login(username="ana", password=CONTRASENA)
         for viejo in ("mapa", "disenar"):
             res = self.client.get(f"/campos/establecimientos/{self.finca.pk}/{viejo}/")
             self.assertEqual(res.status_code, 404, viejo)
+
+    def test_la_seccion_datos_del_establecimiento_esta_oculta_y_precargada(self):
+        # [Unificación] Esos datos ya se cargaron en el alta: la sección no se muestra
+        self.finca.direccion = "Ruta 66"
+        self.finca.departamento = "El Carmen"
+        self.finca.ecorregion = "Valles Templados"
+        self.finca.save()
+        self.client.login(username="ana", password=CONTRASENA)
+        res = self.client.get(self.url_terreno)
+        self.assertContains(res, 'id="seccion-datos-establecimiento" hidden style="display: none;"')
+        self.assertEqual(res.context["datos_finca"], {
+            "nombre": "Finca de Ana", "direccion": "Ruta 66", "departamento": "El Carmen",
+            "localidad": "Perico", "ecorregion_codigo": "valles_templados",
+        })
+        self.assertContains(res, 'id="datos-finca"')
+
+    def test_cada_finca_tiene_su_propio_borrador_en_el_navegador(self):
+        # [Unificación] Las dos páginas del mapa le pasan el id de la finca al JS,
+        # que lo usa para que la clave de localStorage sea distinta por finca
+        self.client.login(username="ana", password=CONTRASENA)
+        for url in (self.url_terreno, self.url_propuesta):
+            res = self.client.get(url)
+            contenido = res.content.decode()
+            self.assertIn(f"window.POLICAMPO_ID_FINCA = {self.finca.pk};", contenido)
+            # y se define ANTES de cargar policampo_common.js (que arma las claves)
+            self.assertLess(contenido.index("window.POLICAMPO_ID_FINCA"), contenido.index("policampo_common.js"))

@@ -44,8 +44,14 @@
     <div class="metrics-strip">
         <div class="metric-box">
             <span class="metric-title">Superficie Total Predio</span>
+            {% if superficie_total %}
             <span class="metric-val">{{ superficie_total|floatformat:4 }} <small style="font-size: 1rem;">ha</small></span>
             <span class="metric-sub">{{ establecimiento.superficie_total_m2|floatformat:0 }} m²</span>
+            {% else %}
+            {# [Unificación] Finca de mapa: la superficie se completa al dibujar el contorno #}
+            <span class="metric-val">—</span>
+            <span class="metric-sub">Se calcula al dibujar el terreno en el mapa</span>
+            {% endif %}
         </div>
 
         <div class="metric-box">

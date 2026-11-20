@@ -8,8 +8,24 @@
 (function (global) {
     'use strict';
 
-    const STORAGE_KEY_ENTRADA = 'policampo_terreno_entrada';
-    const STORAGE_KEY_SALIDA = 'policampo_propuesta_salida';
+    // [Unificación] Un borrador distinto POR FINCA: la plantilla de Django define
+    // window.POLICAMPO_ID_FINCA y se agrega al nombre de la clave
+    // (ej.: "policampo_terreno_entrada_25"). Antes la clave era la misma para todas
+    // las fincas y al abrir una nueva aparecía el dibujo de la anterior.
+    const ID_FINCA = global.POLICAMPO_ID_FINCA;
+    const SUFIJO_FINCA = ID_FINCA ? `_${ID_FINCA}` : '';
+    const STORAGE_KEY_ENTRADA = `policampo_terreno_entrada${SUFIJO_FINCA}`;
+    const STORAGE_KEY_SALIDA = `policampo_propuesta_salida${SUFIJO_FINCA}`;
+
+    // Se borran los borradores viejos (compartidos por todas las fincas) para que no reaparezcan
+    if (ID_FINCA) {
+        try {
+            global.localStorage.removeItem('policampo_terreno_entrada');
+            global.localStorage.removeItem('policampo_propuesta_salida');
+        } catch (e) {
+            /* localStorage puede no estar disponible (modo privado): no pasa nada */
+        }
+    }
 
     const CATALOGO_CULTIVOS = {
         frutilla: {

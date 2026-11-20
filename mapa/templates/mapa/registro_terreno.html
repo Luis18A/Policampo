@@ -42,7 +42,13 @@
         <aside class="sidebar">
 
             <!-- Sección 1: Datos del Establecimiento -->
-            <section class="panel-card">
+            {% comment %}
+            [Unificación] "Datos del Establecimiento" ya se cargaron en el formulario anterior
+            (alta por el mapa). La sección queda OCULTA (hidden) en vez de borrada porque
+            entrada_mapa.js usa estos campos para guardar, validar y centrar el mapa:
+            se completan solos con los datos de la finca (ver el script al final).
+            {% endcomment %}
+            <section class="panel-card" id="seccion-datos-establecimiento" hidden style="display: none;">
                 <div class="panel-header">
                     <span class="step-badge">1</span>
                     <h2>Datos del Establecimiento</h2>
@@ -88,7 +94,7 @@
             <!-- Sección 2: Delimitación y Superficie -->
             <section class="panel-card">
                 <div class="panel-header">
-                    <span class="step-badge">2</span>
+                    <span class="step-badge">1</span>{# [Unificación] antes paso 2 #}
                     <h2>Contorno y Superficie</h2>
                 </div>
 
@@ -124,7 +130,7 @@
             <!-- Sección 3: Sectores de Cultivo -->
             <section class="panel-card">
                 <div class="panel-header">
-                    <span class="step-badge">3</span>
+                    <span class="step-badge">2</span>{# [Unificación] antes paso 3 #}
                     <h2>Sectores de Cultivo</h2>
                 </div>
 
@@ -152,7 +158,7 @@
             <!-- Sección 4: Zonas Florales -->
             <section class="panel-card panel-floral-existente">
                 <div class="panel-header">
-                    <span class="step-badge step-badge-floral">4</span>
+                    <span class="step-badge step-badge-floral">3</span>{# [Unificación] antes paso 4 #}
                     <h2>Zonas con Flores Existentes <span class="badge-opcional">Opcional</span></h2>
                 </div>
 
@@ -298,6 +304,8 @@
 {% block scripts_extra %}
     <!-- 1. Definición de variables globales usando rutas Django -->
     <script>
+        // [Unificación] Identifica la finca: el borrador del navegador se guarda aparte para cada una
+        window.POLICAMPO_ID_FINCA = {{ establecimiento.pk|stringformat:"d" }};
         window.POLICAMPO_API_GUARDAR_ENTRADA_URL = "{% url 'mapa:guardar_terreno' pk=establecimiento.pk %}";
         window.POLICAMPO_URL_PROPUESTA = "{% url 'mapa:propuesta_redisenio' pk=establecimiento.pk %}";
     </script>
@@ -308,6 +316,44 @@
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
 
     <!-- 3. Scripts del módulo -->
-    <script src="{% static 'mapa/js/policampo_common.js' %}?v=2"></script>
+    <script src="{% static 'mapa/js/policampo_common.js' %}?v=11"></script>
     <script src="{% static 'mapa/js/entrada_mapa.js' %}?v=2"></script>
+
+    <!-- 4. [Unificación] Datos de la finca cargados en el formulario de alta -> campos ocultos del paso 1 -->
+    {{ datos_finca|json_script:"datos-finca" }}
+    <script>
+    (function () {
+        const finca = JSON.parse(document.getElementById('datos-finca').textContent);
+        const campo = (id) => document.getElementById(id);
+        const avisar = (el) => el.dispatchEvent(new Event('change'));  // así entrada_mapa.js reacciona
+
+        campo('nombre-establecimiento').value = finca.nombre;
+        campo('direccion-establecimiento').value = finca.direccion;
+
+        // Departamento: al cambiarlo, entrada_mapa.js recarga sus localidades y centra el mapa
+        const depto = campo('departamento');
+        if ([...depto.options].some((o) => o.value === finca.departamento)) {
+            depto.value = finca.departamento;
+            avisar(depto);
+        }
+
+        // Localidad: en el alta es texto libre; si no está en la lista del mapa se agrega
+        const loc = campo('localidad');
+        if (finca.localidad) {
+            let opcion = [...loc.options].find((o) => o.value.toLowerCase() === finca.localidad.toLowerCase());
+            if (!opcion) {
+                opcion = new Option(finca.localidad, finca.localidad);
+                loc.add(opcion);
+            }
+            loc.value = opcion.value;
+            avisar(loc);
+        }
+
+        // Ecorregión: el formulario guarda el nombre y el mapa usa un código
+        if (finca.ecorregion_codigo) {
+            campo('ecorregion').value = finca.ecorregion_codigo;
+            avisar(campo('ecorregion'));
+        }
+    })();
+    </script>
 {% endblock %}
