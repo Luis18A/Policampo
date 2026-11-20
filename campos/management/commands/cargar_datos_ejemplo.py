@@ -1,12 +1,12 @@
 from decimal import Decimal
 from django.core.management.base import BaseCommand
 from campos.models import (
+    COLORES_TIPO_USO,
     Establecimiento,
     Parcela,
     CroquisManual,
     DepartamentoJujuy,
     Ecorregion,
-    DisponibilidadAgua,
     TipoUso,
     UbicacionRelativa,
     MetodoCaracterizacion,
@@ -41,9 +41,6 @@ class Command(BaseCommand):
                 'localidad': 'Maimará',
                 'ecorregion': Ecorregion.QUEBRADA,
                 'superficie_total_ha': Decimal('3.5000'),
-                'largo_estimado_m': Decimal('200.00'),
-                'ancho_estimado_m': Decimal('175.00'),
-                'disponibilidad_agua': DisponibilidadAgua.ACEQUIA,
                 'cultivo_principal': 'Maíces andinos ancestrales y hortalizas',
                 'metodo_caracterizacion': MetodoCaracterizacion.AMBOS,
             }
@@ -56,65 +53,35 @@ class Command(BaseCommand):
         if created or est.parcelas.count() == 0:
             self.stdout.write(self.style.SUCCESS(f'Configurando parcelas para "{est.nombre}"...'))
 
-            # Parcela 1 (Cuestionario)
-            Parcela.objects.create(
-                establecimiento=est,
-                nombre="Tablón de Maíces Andinos",
-                tipo_uso=TipoUso.CULTIVO,
-                cultivo="Maíz morado, capia y chulpi",
-                superficie_ha=Decimal('1.2000'),
-                ubicacion_relativa=UbicacionRelativa.ARRIBA_IZQUIERDA,
-                color_hex='#2b8a3e',
-                observaciones='Cultivo tradicional en terrazas con abono orgánico y compost.',
-                origen='cuestionario',
-                geometria_visual={'x': 50, 'y': 50, 'w': 220, 'h': 160},
-                orden=1
-            )
-
-            # Parcela 2 (Cuestionario)
-            Parcela.objects.create(
-                establecimiento=est,
-                nombre="Huerta Agroecológica Biointensiva",
-                tipo_uso=TipoUso.CULTIVO,
-                cultivo="Hortalizas de hoja, zanahoria y aromáticas",
-                superficie_ha=Decimal('0.6000'),
-                ubicacion_relativa=UbicacionRelativa.ARRIBA_CENTRO,
-                color_hex='#20c997',
-                observaciones='Riego por goteo con mulching vegetal y flores benéficas.',
-                origen='cuestionario',
-                geometria_visual={'x': 310, 'y': 50, 'w': 200, 'h': 160},
-                orden=2
-            )
-
-            # Parcela 3 (Croquis Manual)
-            Parcela.objects.create(
-                establecimiento=est,
-                nombre="Pastura de Alfalfa Criolla",
-                tipo_uso=TipoUso.PASTURA,
-                cultivo="Alfalfa criolla para animales",
-                superficie_ha=Decimal('0.8000'),
-                ubicacion_relativa=UbicacionRelativa.CENTRO,
-                color_hex='#fcc419',
-                observaciones='Rotación de pastoreo y cobertura de suelo.',
-                origen='croquis_manual',
-                geometria_visual={'x': 50, 'y': 240, 'w': 250, 'h': 160},
-                orden=3
-            )
-
-            # Parcela 4 (Croquis Manual)
-            Parcela.objects.create(
-                establecimiento=est,
-                nombre="Acequia y Reservorio Comunal",
-                tipo_uso=TipoUso.AGUA,
-                cultivo="",
-                superficie_ha=Decimal('0.3000'),
-                ubicacion_relativa=UbicacionRelativa.ABAJO_IZQUIERDA,
-                color_hex='#339af0',
-                observaciones='Turno de riego semanal.',
-                origen='croquis_manual',
-                geometria_visual={'x': 330, 'y': 240, 'w': 180, 'h': 120},
-                orden=4
-            )
+            # [Unificación] Solo cultivos y sectores de flores (esquema de datos del grupo).
+            # El nombre se arma igual que en los formularios: el cultivo o "Sector de flores N".
+            sectores = [
+                # (tipo, cultivo, superficie, ubicación, origen, geometría en el croquis)
+                (TipoUso.CULTIVO, 'Maíz morado', '1.2000', UbicacionRelativa.ARRIBA_IZQUIERDA,
+                 'cuestionario', {'x': 50, 'y': 50, 'w': 220, 'h': 160}),
+                (TipoUso.CULTIVO, 'Hortalizas de hoja', '0.6000', UbicacionRelativa.ARRIBA_CENTRO,
+                 'cuestionario', {'x': 310, 'y': 50, 'w': 200, 'h': 160}),
+                (TipoUso.CULTIVO, 'Haba', '0.8000', UbicacionRelativa.CENTRO,
+                 'croquis_manual', {'x': 50, 'y': 240, 'w': 250, 'h': 160}),
+                (TipoUso.FLORES, '', '0.7000', UbicacionRelativa.ABAJO_IZQUIERDA,
+                 'croquis_manual', {'x': 330, 'y': 240, 'w': 180, 'h': 120}),
+            ]
+            numero_flores = 0
+            for orden, (tipo, cultivo, superficie, ubicacion, origen, geometria) in enumerate(sectores, start=1):
+                if tipo == TipoUso.FLORES:
+                    numero_flores += 1
+                Parcela.objects.create(
+                    establecimiento=est,
+                    nombre=Parcela.nombre_automatico(tipo, cultivo, numero_flores),
+                    tipo_uso=tipo,
+                    cultivo=cultivo,
+                    superficie_ha=Decimal(superficie),
+                    ubicacion_relativa=ubicacion,
+                    color_hex=COLORES_TIPO_USO[tipo],
+                    origen=origen,
+                    geometria_visual=geometria,
+                    orden=orden,
+                )
 
             CroquisManual.objects.get_or_create(establecimiento=est)
 

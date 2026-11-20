@@ -92,26 +92,13 @@
                 <button type="button" class="crop-chip" data-crop="Maíz" data-color="#2b8a3e" data-uso="cultivo_agricola">🌽 Maíz</button>
                 <button type="button" class="crop-chip" data-crop="Tomate" data-color="#2b8a3e" data-uso="cultivo_agricola">🍅 Tomate</button>
                 <button type="button" class="crop-chip" data-crop="Hortalizas" data-color="#2b8a3e" data-uso="cultivo_agricola">🥬 Hortalizas</button>
-                <button type="button" class="crop-chip" data-crop="Pastura" data-color="#fcc419" data-uso="pastura">🌾 Pastura</button>
-                <button type="button" class="crop-chip" data-crop="Acequia / Agua" data-color="#339af0" data-uso="agua">💧 Agua</button>
-                <button type="button" class="crop-chip" data-crop="Construcción" data-color="#ff922b" data-uso="construccion">🏠 Construcción</button>
-                <button type="button" class="crop-chip" data-crop="Camino" data-color="#d4a76a" data-uso="camino">🛤️ Camino</button>
-                <button type="button" class="crop-chip" data-crop="Sin cultivar" data-color="#94a3b8" data-uso="sin_cultivar">⬜ Sin cultivar</button>
+                {# [Unificación] Solo cultivos y sectores de flores (esquema del grupo) #}
+                <button type="button" class="crop-chip" data-crop="Sector de flores" data-color="#e64980" data-uso="sector_flores">🌼 Sector de flores</button>
             </div>
         </div>
 
-        <!-- Color del Lápiz y Guardado -->
+        <!-- Estado del guardado. [Unificación] El color ya no se elige: lo define el tipo de sector -->
         <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <div style="display: flex; align-items: center; gap: 0.35rem;">
-                <span style="font-size: 0.8rem; font-weight: 700; color: #64748b;">Color:</span>
-                <div class="color-picker-group" id="pencil-colors">
-                    {% for hex, nombre in colores %}
-                    <button type="button" class="color-option-btn {% if forloop.first %}selected{% endif %}" 
-                            data-color="{{ hex }}" title="{{ nombre }}" 
-                            style="background-color: {{ hex }}; width: 26px; height: 26px;"></button>
-                    {% endfor %}
-                </div>
-            </div>
             <span id="save-status-msg" style="font-size: 0.85rem; font-weight: 700; color: #059669;"></span>
         </div>
     </div>
@@ -170,24 +157,22 @@
             <div class="card" style="padding: 1.15rem; box-shadow: none; border: 1.5px solid #e2e8f0;">
                 <div class="sidebar-section-title">
                     <span>🌱</span>
-                    <span>Información de la Parcela</span>
+                    <span>Información del sector</span>
                 </div>
 
                 <div id="prop-empty" style="text-align: center; padding: 2rem 0.5rem; color: #64748b; font-size: 0.88rem;">
                     <span style="font-size: 2.5rem; display: block; margin-bottom: 0.5rem;">✏️</span>
-                    Dibujá una parcela en el mapa o hacé clic sobre una ya dibujada para ver sus datos, cambiar cultivo o agregar hectáreas.
+                    Dibujá un sector en el lienzo o hacé clic sobre uno ya dibujado para cambiar su tipo o su cultivo.
                 </div>
 
                 <div id="prop-form" style="display: none; flex-direction: column; gap: 0.85rem;">
-                    <!-- Nombre de la Parcela -->
+                    {% comment %}
+                    [Unificación] Solo los datos del esquema del grupo: tipo de sector y cultivo.
+                    El nombre y el color se asignan solos; la superficie la calcula el dibujo.
+                    {% endcomment %}
+                    <!-- Tipo de sector -->
                     <div class="form-group">
-                        <label class="form-label" style="font-size: 0.82rem;">Nombre del sector o parcela *</label>
-                        <input type="text" id="prop-nombre" class="form-input" placeholder="Ej: Parcela Norte, Huerta...">
-                    </div>
-
-                    <!-- Tipo de Uso -->
-                    <div class="form-group">
-                        <label class="form-label" style="font-size: 0.82rem;">Tipo de Uso *</label>
+                        <label class="form-label" style="font-size: 0.82rem;">Tipo de sector *</label>
                         <select id="prop-uso" class="form-select">
                             {% for val, label in tipos_uso %}
                             <option value="{{ val }}">{{ label }}</option>
@@ -195,34 +180,15 @@
                         </select>
                     </div>
 
-                    <!-- Cultivo -->
-                    <div class="form-group">
-                        <label class="form-label" style="font-size: 0.82rem;">Cultivo o especie sembrada</label>
+                    <!-- Cultivo (no aplica a un sector de flores) -->
+                    <div class="form-group" id="prop-grupo-cultivo">
+                        <label class="form-label" style="font-size: 0.82rem;">Cultivo *</label>
                         <input type="text" id="prop-cultivo" class="form-input" placeholder="Ej: Papa, Maíz morado...">
-                    </div>
-
-                    <!-- Superficie en Hectáreas (Opcional, cuando el productor conoce el dato) -->
-                    <div class="form-group">
-                        <label class="form-label" style="font-size: 0.82rem;">
-                            Superficie en Hectáreas (Opcional)
-                        </label>
-                        <input type="number" id="prop-superficie" class="form-input" step="0.0001" min="0.0001" placeholder="Ej: 0.75 (si conocés el dato)">
-                        <span class="form-help">Ingresá este dato si lo conocés.</span>
-                    </div>
-
-                    <!-- Color de la parcela -->
-                    <div class="form-group">
-                        <label class="form-label" style="font-size: 0.82rem;">Color de la parcela</label>
-                        <div class="color-picker-group" id="editor-colors">
-                            {% for hex, nombre in colores %}
-                            <button type="button" class="color-option-btn" data-color="{{ hex }}" title="{{ nombre }}" style="background-color: {{ hex }}; width: 28px; height: 28px;"></button>
-                            {% endfor %}
-                        </div>
                     </div>
 
                     <div style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
                         <button type="button" id="btn-eliminar-panel" class="btn btn-danger btn-sm" style="width: 100%;">
-                            🗑️ Eliminar esta parcela
+                            🗑️ Eliminar este sector
                         </button>
                     </div>
                 </div>
@@ -234,6 +200,9 @@
             </div>
         </div>
     </div>
+
+    {# [Unificación] Paso final: solicitar el diagnóstico (todavía no funciona) #}
+    {% include 'campos/_solicitar_diagnostico.html' %}
 </div>
 {% endblock %}
 
@@ -253,14 +222,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnDraw = document.getElementById('tool-draw');
     const cropChips = document.querySelectorAll('.crop-chip');
 
-    function highlightPencilColor(hex) {
-        document.querySelectorAll('#pencil-colors .color-option-btn').forEach(b => {
-            if (b.dataset.color.toLowerCase() === (hex || '').toLowerCase()) {
-                b.classList.add('selected');
-            } else {
-                b.classList.remove('selected');
-            }
-        });
+    // [Unificación] Un sector de flores no lleva cultivo: se oculta ese campo del panel
+    function mostrarCultivoSegunTipo(tipoUso) {
+        document.getElementById('prop-grupo-cultivo').style.display =
+            tipoUso === 'sector_flores' ? 'none' : '';
     }
 
     // Inicializar editor con modo LÁPIZ activo por defecto y medidas reales del campo
@@ -284,19 +249,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (propEmpty) propEmpty.style.display = 'none';
             if (propForm) propForm.style.display = 'flex';
 
-            document.getElementById('prop-nombre').value = p.nombre || '';
             document.getElementById('prop-uso').value = p.tipo_uso || 'cultivo_agricola';
             document.getElementById('prop-cultivo').value = p.cultivo || '';
-            document.getElementById('prop-superficie').value = (p.superficie_ha !== null && p.superficie_ha !== undefined) ? p.superficie_ha : '';
-
-            // Resaltar color en selector lateral
-            document.querySelectorAll('#editor-colors .color-option-btn').forEach(b => {
-                if (b.dataset.color.toLowerCase() === (p.color || '').toLowerCase()) {
-                    b.classList.add('selected');
-                } else {
-                    b.classList.remove('selected');
-                }
-            });
+            mostrarCultivoSegunTipo(p.tipo_uso);
         },
         onResumenUpdate: function(resumen) {
             document.getElementById('metric-total-parcelas').textContent = resumen.totalParcelas;
@@ -308,7 +263,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Sincronizar cultivo activo inicial con el color predefinido de cultivo agrícola (#2b8a3e)
     editor.setActiveCrop(inputCultivoRapido.value || 'Papa', 'cultivo_agricola', '#2b8a3e');
-    highlightPencilColor('#2b8a3e');
 
     // Manejar cambio en el input de cultivo
     inputCultivoRapido.addEventListener('input', function() {
@@ -316,7 +270,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const tipoUso = editor.inferirTipoUso(val);
         const colorAuto = getColorPorTipoUso(tipoUso);
         editor.setActiveCrop(val, tipoUso, colorAuto);
-        highlightPencilColor(colorAuto);
         labelCultivoActivo.textContent = val;
         tipText.textContent = `✏️ Lápiz listo para dibujar: ${val}`;
         tipText.style.color = '#047857';
@@ -341,19 +294,9 @@ document.addEventListener('DOMContentLoaded', function() {
             tipText.style.color = '#047857';
 
             editor.setActiveCrop(crop, tipoUso, color);
-            highlightPencilColor(color);
 
             btnDraw.classList.add('active');
             btnSelect.classList.remove('active');
-        });
-    });
-
-    // Selector de color del lápiz
-    document.querySelectorAll('#pencil-colors .color-option-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('#pencil-colors .color-option-btn').forEach(b => b.classList.remove('selected'));
-            this.classList.add('selected');
-            editor.setActiveColor(this.dataset.color);
         });
     });
 
@@ -380,49 +323,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Edición reactiva desde el panel lateral
-    document.getElementById('prop-nombre').addEventListener('input', function() {
-        if (editor.selectedParcela) {
-            editor.selectedParcela.nombre = this.value;
-            editor.render();
-        }
-    });
+    // Edición reactiva desde el panel lateral (tipo de sector y cultivo)
     document.getElementById('prop-uso').addEventListener('change', function() {
         if (editor.selectedParcela) {
-            editor.selectedParcela.tipo_uso = this.value;
-            const nuevoColor = getColorPorTipoUso(this.value);
-            editor.selectedParcela.color = nuevoColor;
-            document.querySelectorAll('#editor-colors .color-option-btn').forEach(b => {
-                b.classList.toggle('selected', b.dataset.color.toLowerCase() === nuevoColor.toLowerCase());
-            });
+            const p = editor.selectedParcela;
+            p.tipo_uso = this.value;
+            p.color = getColorPorTipoUso(this.value);  // el color lo define el tipo
+            if (this.value === 'sector_flores') {
+                p.cultivo = '';
+                p.nombre = 'Sector de flores';
+            } else {
+                p.cultivo = document.getElementById('prop-cultivo').value || 'Cultivo';
+                p.nombre = p.cultivo;
+                document.getElementById('prop-cultivo').value = p.cultivo;
+            }
+            mostrarCultivoSegunTipo(this.value);
             editor.render();
         }
     });
     document.getElementById('prop-cultivo').addEventListener('input', function() {
         if (editor.selectedParcela) {
             editor.selectedParcela.cultivo = this.value;
+            editor.selectedParcela.nombre = this.value;
             editor.render();
         }
-    });
-    document.getElementById('prop-superficie').addEventListener('input', function() {
-        if (editor.selectedParcela) {
-            const val = parseFloat(this.value);
-            editor.selectedParcela.superficie_ha = (!isNaN(val) && val > 0) ? val : null;
-            editor.render();
-            editor.updateResumen();
-        }
-    });
-
-    // Colores desde el panel lateral
-    document.querySelectorAll('#editor-colors .color-option-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('#editor-colors .color-option-btn').forEach(b => b.classList.remove('selected'));
-            this.classList.add('selected');
-            if (editor.selectedParcela) {
-                editor.selectedParcela.color = this.dataset.color;
-                editor.render();
-            }
-        });
     });
 
     // Guardar croquis en SQLite vía AJAX

@@ -2,12 +2,14 @@
  * POLICAMPO - Editor de Croquis Manual Interactivo
  * Permite dibujar parcelas arrastrando con el mouse o dedo,
  * muestra medidas en metros en tiempo real y asigna colores
- * predefinidos según el tipo de uso (con opción de cambiar color).
+ * predefinidos según el tipo de uso.
+ * [Unificación] Solo se dibujan cultivos y sectores de flores; el color lo define el tipo.
  */
 
 // ─── Paleta predefinida por Tipo de Uso ──────────────────────────────────────
 const POLICAMPO_COLORES_TIPO_USO = {
     cultivo_agricola: '#2b8a3e', // Verde fuerte
+    sector_flores:    '#e64980', // Rosa
     pastura:          '#fcc419', // Amarillo
     agua:             '#339af0', // Celeste / Azul
     construccion:     '#ff922b', // Naranja
@@ -266,12 +268,13 @@ class CroquisManualLibre {
             if (w > 12 && h > 12) {
                 const tipoUso = this.activeTipoUso || this.inferirTipoUso(this.activeCrop);
                 const etiqueta = this.activeCrop || this._labelTipoUso(tipoUso);
-                const cultivo = (tipoUso === 'cultivo_agricola' || tipoUso === 'pastura') ? etiqueta : '';
+                const cultivo = (tipoUso === 'cultivo_agricola') ? etiqueta : '';
                 const medidas = this._pxToM(w, h);
 
                 const p = {
                     id: 'tmp_' + Date.now(),
-                    nombre: `Sector ${this.parcelas.length + 1} (${etiqueta})`,
+                    // El nombre definitivo lo arma el servidor al guardar (cultivo o "Sector de flores N")
+                    nombre: etiqueta,
                     tipo_uso: tipoUso,
                     cultivo: cultivo,
                     color: this.activeColor,
@@ -390,18 +393,16 @@ class CroquisManualLibre {
     }
 
     inferirTipoUso(texto) {
+        // [Unificación] Solo dos tipos: sector de flores o cultivo
         const c = (texto || '').toLowerCase();
-        if (c.includes('acequia') || c.includes('agua') || c.includes('estanque') || c.includes('tanque') || c.includes('riego')) return 'agua';
-        if (c.includes('pastura') || c.includes('alfalfa') || c.includes('pasto')) return 'pastura';
-        if (c.includes('camino') || c.includes('calzada') || c.includes('sendero')) return 'camino';
-        if (c.includes('casa') || c.includes('vivienda') || c.includes('galpon') || c.includes('galpón') || c.includes('corral') || c.includes('construccion') || c.includes('construcción')) return 'construccion';
-        if (c.includes('sin cultivar') || c.includes('descanso') || c.includes('vacio') || c.includes('vacío')) return 'sin_cultivar';
+        if (c.includes('flor') || c.includes('floral')) return 'sector_flores';
         return 'cultivo_agricola';
     }
 
     _labelTipoUso(tipoUso) {
         const labels = {
             cultivo_agricola: 'Cultivo',
+            sector_flores: 'Sector de flores',
             pastura: 'Pastura',
             agua: 'Agua / Acequia',
             construccion: 'Construcción',

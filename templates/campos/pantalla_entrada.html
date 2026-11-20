@@ -35,7 +35,7 @@
                     <span>Registrar por superficies</span>
                 </h2>
                 <p class="welcome-card-text">
-                    Indicá la superficie total y luego distribuí las hectáreas entre cultivos y otros usos. El largo y el ancho son opcionales.
+                    Indicá la superficie total y luego distribuí las hectáreas entre cultivos y sectores de flores.
                 </p>
                 <div class="welcome-card-action">
                     <a href="{% url 'campos:establecimiento_crear' %}?modo=superficies" class="welcome-card-btn">
@@ -58,7 +58,7 @@
                     <span>Dibujar mi terreno</span>
                 </h2>
                 <p class="welcome-card-text">
-                    Representá tu establecimiento mediante un croquis. Delimitá parcelas y ubicá cultivos, caminos y otros sectores.
+                    Representá tu establecimiento mediante un croquis. Dibujá dónde están tus cultivos y tus sectores de flores.
                 </p>
                 <div class="welcome-card-action">
                     <a href="{% url 'campos:establecimiento_crear' %}?modo=disenador" class="welcome-card-btn">
@@ -84,16 +84,10 @@
                     Localizá tu establecimiento en el mapa y delimitá geográficamente su superficie.
                 </p>
                 <div class="welcome-card-action">
-                    {# [Unificación] Lleva al mapa de Agus (app mapa); el mapa de Sol se eliminó #}
-                    {% if ultimo_campo %}
-                    <a href="{% url 'mapa:delimitar_terreno' pk=ultimo_campo.pk %}" class="welcome-card-btn">
-                        Buscar mi establecimiento &rarr;
-                    </a>
-                    {% else %}
+                    {# [Unificación] Como las otras dos opciones, siempre carga una finca NUEVA (después sigue en el mapa de Agus) #}
                     <a href="{% url 'campos:establecimiento_crear' %}?modo=mapa" class="welcome-card-btn">
                         Buscar mi establecimiento &rarr;
                     </a>
-                    {% endif %}
                 </div>
             </div>
         </article>
@@ -112,10 +106,6 @@
         <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">{# [Integración] flex-wrap: en celular los botones bajan de línea en vez de salirse #}
             <a href="{% url 'campos:establecimiento_detalle' pk=ultimo_campo.pk %}" class="btn btn-secondary btn-sm">
                 Ver ficha de {{ ultimo_campo.nombre }}
-            </a>
-            {# [Integración] Acceso directo al diseño en el mapa (app mapa, parte de Agus) #}
-            <a href="{% url 'mapa:delimitar_terreno' pk=ultimo_campo.pk %}" class="btn btn-secondary btn-sm">
-                🌼 Diseñar en el mapa
             </a>
             <a href="{% url 'campos:establecimientos_lista' %}" class="btn btn-primary btn-sm">
                 Ver todos mis campos &rarr;

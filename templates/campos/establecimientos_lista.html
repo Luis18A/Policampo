@@ -33,32 +33,18 @@
                 </p>
 
                 <div style="background-color: #f8fafc; border-radius: var(--radius-sm); padding: 0.85rem; margin-bottom: 1.25rem; font-size: 0.88rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                    {# [Unificación] Ya no se muestra el agua; el cultivo principal solo si se cargó (croquis) #}
+                    {% if e.cultivo_principal %}
                     <div>🌾 <strong>Cultivo principal:</strong> {{ e.cultivo_principal }}</div>
-                    <div>💧 <strong>Agua:</strong> {{ e.disponibilidad_agua }}</div>
+                    {% endif %}
                     <div>📐 <strong>Superficie total:</strong> <strong>{{ e.superficie_total_ha|floatformat:2 }} ha</strong> ({{ e.superficie_total_m2|floatformat:0 }} m²)</div>
-                    <div>📊 <strong>Parcelas:</strong> {{ e.parcelas.count }} registradas ({{ e.porcentaje_utilizado }}% ocupado)</div>
+                    <div>📊 <strong>Sectores:</strong> {{ e.parcelas.count }} registrados ({{ e.porcentaje_utilizado }}% ocupado)</div>
                 </div>
             </div>
 
+            {# [Unificación] La tarjeta solo lleva a la ficha; los accesos (cuestionario, croquis, mapa) están ahí #}
             <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; border-top: 1px solid var(--color-border); padding-top: 1rem;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                    <a href="{% url 'campos:parcelas_cuestionario' pk=e.pk %}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem;">
-                        📝 Cuestionario
-                    </a>
-                    <a href="{% url 'campos:croquis_automatico' pk=e.pk %}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem; color: #2b8a3e;">
-                        🌱 Croquis Auto
-                    </a>
-                </div>
-                {# [Unificación] El "Mapa Satelital" de Sol se reemplazó por el mapa de Agus (app mapa) #}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                    <a href="{% url 'campos:croquis_manual' pk=e.pk %}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem; color: #ea580c;">
-                        📐 Diseñador
-                    </a>
-                    <a href="{% url 'mapa:delimitar_terreno' pk=e.pk %}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem; color: #a61e4d;">
-                        🌼 Mapa
-                    </a>
-                </div>
-                <a href="{% url 'campos:establecimiento_detalle' pk=e.pk %}" class="btn btn-primary btn-sm" style="width: 100%; margin-top: 0.25rem;">
+                <a href="{% url 'campos:establecimiento_detalle' pk=e.pk %}" class="btn btn-primary btn-sm" style="width: 100%;">
                     Ver ficha completa &rarr;
                 </a>
             </div>

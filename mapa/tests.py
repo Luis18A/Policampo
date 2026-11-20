@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from campos.models import Establecimiento
+from campos.models import Establecimiento, MetodoCaracterizacion
 
 from .models import DisenoEspacial
 
@@ -48,6 +48,7 @@ class MapaTests(TestCase):
         self.finca = Establecimiento.objects.create(
             usuario=self.ana, nombre="Finca de Ana", localidad="Perico",
             superficie_total_ha=Decimal("1.5"), cultivo_principal="Frutilla",
+            metodo_caracterizacion=MetodoCaracterizacion.MAPA,  # [Unificación] cargada por el mapa
         )
         self.url_mapa = reverse("mapa:delimitar_terreno", kwargs={"pk": self.finca.pk})
         self.url_guardar = reverse("mapa:guardar_diseno", kwargs={"pk": self.finca.pk})
@@ -112,13 +113,31 @@ class MapaTests(TestCase):
         self.assertEqual(res.context["parcela_inicial"], PARCELA)
         self.assertEqual(res.context["centro_inicial"], {"lat": -24.375, "lng": -65.095, "zoom": 16})
 
-    def test_inicio_lista_y_ficha_llevan_al_mapa_de_agus(self):
+    def test_inicio_por_mapa_siempre_crea_una_finca_nueva(self):
+        # [Unificación] Como las otras dos opciones, "Ubicar mi campo en el mapa" carga una finca nueva
         self.client.login(username="ana", password=CONTRASENA)
-        for nombre, kwargs in (("campos:pantalla_entrada", {}),
-                               ("campos:establecimientos_lista", {}),
-                               ("campos:establecimiento_detalle", {"pk": self.finca.pk})):
-            res = self.client.get(reverse(nombre, kwargs=kwargs))
-            self.assertContains(res, self.url_mapa, msg_prefix=nombre)
+        res = self.client.get(reverse("campos:pantalla_entrada"))
+        self.assertContains(res, reverse("campos:establecimiento_crear") + "?modo=mapa")
+        self.assertNotContains(res, self.url_mapa)
+
+    def test_la_ficha_no_tiene_la_seccion_de_herramientas(self):
+        # [Unificación] Se quitó "Herramientas y Representaciones de este Campo"
+        self.client.login(username="ana", password=CONTRASENA)
+        res = self.client.get(reverse("campos:establecimiento_detalle", kwargs={"pk": self.finca.pk}))
+        self.assertEqual(res.status_code, 200)
+        self.assertNotContains(res, "Herramientas y Representaciones")
+        # Lo que queda es UN botón para editar con su método (esta finca es de mapa)
+        self.assertContains(res, self.url_mapa)
+        self.assertContains(res, "Editar en el mapa")
+
+    def test_la_tarjeta_de_la_lista_solo_lleva_a_la_ficha(self):
+        # [Unificación] Sin botones de cuestionario, croquis, diseñador ni mapa en la tarjeta
+        self.client.login(username="ana", password=CONTRASENA)
+        res = self.client.get(reverse("campos:establecimientos_lista"))
+        self.assertContains(res, reverse("campos:establecimiento_detalle", kwargs={"pk": self.finca.pk}))
+        for nombre in ("parcelas_cuestionario", "croquis_automatico", "croquis_manual"):
+            self.assertNotContains(res, reverse(f"campos:{nombre}", kwargs={"pk": self.finca.pk}), msg_prefix=nombre)
+        self.assertNotContains(res, self.url_mapa)
 
     def test_nuevo_predio_en_modo_mapa_termina_en_el_mapa_de_agus(self):
         self.client.login(username="ana", password=CONTRASENA)
@@ -130,6 +149,7 @@ class MapaTests(TestCase):
         })
         nueva = Establecimiento.objects.get(nombre="Finca Nueva")
         self.assertRedirects(res, reverse("mapa:delimitar_terreno", kwargs={"pk": nueva.pk}))
+        self.assertEqual(nueva.metodo_caracterizacion, MetodoCaracterizacion.MAPA)
 
     def test_el_mapa_de_sol_ya_no_existe(self):
         self.client.login(username="ana", password=CONTRASENA)

@@ -1,0 +1,21 @@
+{% comment %}
+[Unificación] Paso final después de cargar la finca (cuestionario o croquis): pedir el diagnóstico.
+Por ahora el botón está deshabilitado porque el módulo de diagnóstico lo hace otro integrante.
+Cuando exista, se reemplaza el <button disabled> por un enlace a su URL, por ejemplo:
+    <a href="{% url 'diagnostico:...' pk=establecimiento.pk %}" class="btn btn-diagnostico">...</a>
+{% endcomment %}
+<section class="solicitar-diagnostico" aria-labelledby="titulo-diagnostico">
+    <div class="solicitar-diagnostico-texto">
+        <h2 id="titulo-diagnostico">¿Terminaste de cargar tu finca?</h2>
+        <p>
+            Con los datos de <strong>{{ establecimiento.nombre }}</strong> vamos a analizar la biodiversidad
+            de tu terreno y proponerte mejoras con franjas florales.
+        </p>
+    </div>
+    <div class="solicitar-diagnostico-accion">
+        <button type="button" class="btn btn-diagnostico" disabled aria-describedby="diagnostico-proximamente">
+            🔍 Solicitar diagnóstico
+        </button>
+        <span id="diagnostico-proximamente" class="solicitar-diagnostico-nota">Disponible próximamente</span>
+    </div>
+</section>

@@ -42,12 +42,34 @@ class DisponibilidadAgua(models.TextChoices):
 
 class TipoUso(models.TextChoices):
     CULTIVO = 'cultivo_agricola', 'Cultivo agrícola'
+    FLORES = 'sector_flores', 'Sector de flores'
+    # [Unificación] Los tipos de abajo ya no se ofrecen en los formularios (solo cultivo y
+    # flores, según el esquema del grupo). Se dejan para que los datos viejos se sigan mostrando.
     PASTURA = 'pastura', 'Pastura'
     SIN_CULTIVAR = 'sin_cultivar', 'Espacio sin cultivar'
     CAMINO = 'camino', 'Camino / Calzada'
     AGUA = 'agua', 'Agua (acequia, estanque, reservorio)'
     CONSTRUCCION = 'construccion', 'Construcción (vivienda, galpón, corral)'
     OTRO = 'otro', 'Otro uso'
+
+
+# [Unificación] Únicos tipos de sector que se pueden cargar en el cuestionario y en el croquis
+TIPOS_SECTOR = [
+    (TipoUso.CULTIVO.value, 'Cultivo'),
+    (TipoUso.FLORES.value, 'Sector de flores'),
+]
+
+# Color de cada tipo de sector en los croquis (se asigna solo, el usuario ya no lo elige)
+COLORES_TIPO_USO = {
+    'cultivo_agricola': '#2b8a3e',  # Verde fuerte
+    'sector_flores':    '#e64980',  # Rosa
+    'pastura':          '#fcc419',  # Amarillo
+    'sin_cultivar':     '#94a3b8',  # Gris azulado
+    'camino':           '#d4a76a',  # Marrón tierra
+    'agua':             '#339af0',  # Celeste / Azul
+    'construccion':     '#ff922b',  # Naranja
+    'otro':             '#845ef7',  # Violeta
+}
 
 
 class UbicacionRelativa(models.TextChoices):
@@ -63,8 +85,13 @@ class UbicacionRelativa(models.TextChoices):
 
 
 class MetodoCaracterizacion(models.TextChoices):
+    """
+    [Unificación] Cada finca se carga con UNO de los tres métodos y después solo se puede
+    editar con ese mismo método. AMBOS queda solo por datos viejos (antes se podían mezclar).
+    """
     CUESTIONARIO = 'cuestionario', 'Registrar por superficies (cuestionario)'
     CROQUIS_MANUAL = 'croquis_manual', 'Dibujar mi terreno (croquis manual)'
+    MAPA = 'mapa', 'Ubicar mi campo en el mapa'
     AMBOS = 'ambos', 'Ambos métodos utilizados'
 
 
@@ -138,8 +165,10 @@ class Establecimiento(models.Model):
         default=DisponibilidadAgua.ACEQUIA,
         verbose_name="Disponibilidad de agua"
     )
+    # [Unificación] Ya no se pide en ningún formulario; queda para los datos cargados antes.
     cultivo_principal = models.CharField(
         max_length=150,
+        blank=True,
         verbose_name="Cultivo principal"
     )
     metodo_caracterizacion = models.CharField(
@@ -181,6 +210,27 @@ class Establecimiento(models.Model):
     def superficie_restante_m2(self) -> Decimal:
         return self.superficie_restante_ha * Decimal('10000.0')
 
+    # ─── [Unificación] Método de carga: cada finca se edita solo con el suyo ───
+    # Nombre de la URL que abre cada método (todas reciben pk=<id del establecimiento>)
+    URL_POR_METODO = {
+        MetodoCaracterizacion.CUESTIONARIO: 'campos:parcelas_cuestionario',
+        MetodoCaracterizacion.CROQUIS_MANUAL: 'campos:croquis_manual',
+        MetodoCaracterizacion.MAPA: 'mapa:delimitar_terreno',
+        MetodoCaracterizacion.AMBOS: 'campos:parcelas_cuestionario',
+    }
+
+    def permite_metodo(self, metodo) -> bool:
+        """¿Se puede editar esta finca con este método? Solo con el que se eligió al cargarla."""
+        if self.metodo_caracterizacion == MetodoCaracterizacion.AMBOS:
+            # Datos viejos: antes se podían mezclar cuestionario y croquis
+            return metodo in (MetodoCaracterizacion.CUESTIONARIO, MetodoCaracterizacion.CROQUIS_MANUAL)
+        return self.metodo_caracterizacion == metodo
+
+    @property
+    def url_edicion(self) -> str:
+        """Nombre de la URL del método con el que se edita esta finca."""
+        return self.URL_POR_METODO.get(self.metodo_caracterizacion, 'campos:parcelas_cuestionario')
+
     @property
     def porcentaje_utilizado(self) -> float:
         if not self.superficie_total_ha or self.superficie_total_ha <= 0:
@@ -221,7 +271,6 @@ class Establecimiento(models.Model):
             'ecorregion': self.ecorregion,
             'superficie_total_ha': float(self.superficie_total_ha),
             'superficie_total_m2': float(self.superficie_total_m2),
-            'disponibilidad_agua': self.disponibilidad_agua,
             'cultivo_principal': self.cultivo_principal,
             'metodo_caracterizacion': self.metodo_caracterizacion,
             'metodo_caracterizacion_display': self.get_metodo_caracterizacion_display(),
@@ -302,6 +351,17 @@ class Parcela(models.Model):
     def __str__(self):
         sup_str = f"{self.superficie_ha} ha" if self.superficie_ha else "Sup. no esp."
         return f"{self.nombre} ({sup_str}) - {self.establecimiento.nombre}"
+
+    @staticmethod
+    def nombre_automatico(tipo_uso, cultivo, numero_flores):
+        """
+        [Unificación] El usuario ya no escribe un nombre para cada sector: se arma solo.
+        Un cultivo se llama como el cultivo ("Maíz"); un sector de flores se numera
+        ("Sector de flores 2"). numero_flores es el número que le toca a ese sector.
+        """
+        if tipo_uso == TipoUso.FLORES:
+            return f"Sector de flores {numero_flores}"
+        return (cultivo or '').strip() or 'Cultivo'
 
     @property
     def superficie_m2(self) -> Decimal:

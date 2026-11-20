@@ -10,27 +10,24 @@ from .models import (
     Establecimiento,
     Parcela,
     CroquisManual,
-    COLORES_POLICAMPO,
+    COLORES_TIPO_USO,
+    TIPOS_SECTOR,
     TipoUso,
-    UbicacionRelativa,
     MetodoCaracterizacion,
-    DepartamentoJujuy,
-    Ecorregion,
-    DisponibilidadAgua,
 )
 from .forms import EstablecimientoForm, ParcelaForm
 
 
-# ─── Paleta centralizada de colores por tipo de uso ───────────────────────────
-_COLORES_TIPO_USO = {
-    'cultivo_agricola': '#2b8a3e',  # Verde fuerte
-    'pastura':          '#fcc419',  # Amarillo
-    'sin_cultivar':     '#94a3b8',  # Gris azulado
-    'camino':           '#d4a76a',  # Marrón tierra
-    'agua':             '#339af0',  # Celeste / Azul
-    'construccion':     '#ff922b',  # Naranja
-    'otro':             '#845ef7',  # Violeta
-}
+# ─── Paleta centralizada de colores por tipo de uso (definida en models.py) ───
+_COLORES_TIPO_USO = COLORES_TIPO_USO
+
+
+def _proximo_numero_flores(establecimiento, excluir_pk=None):
+    """[Unificación] Número que le toca al próximo "Sector de flores N" de este establecimiento."""
+    sectores = establecimiento.parcelas.filter(tipo_uso=TipoUso.FLORES)
+    if excluir_pk:
+        sectores = sectores.exclude(pk=excluir_pk)
+    return sectores.count() + 1
 
 
 def _establecimiento_del_usuario(request, pk):
@@ -40,6 +37,32 @@ def _establecimiento_del_usuario(request, pk):
     así nadie puede ver ni modificar los datos de otro productor (Ley 25.326).
     """
     return get_object_or_404(Establecimiento, pk=pk, usuario=request.user)
+
+
+def _redirigir_si_otro_metodo(request, establecimiento, metodo):
+    """
+    [Unificación] Cada finca se edita solo con el método con el que se cargó.
+    Si se intenta abrir otro método (por ejemplo escribiendo la dirección a mano),
+    devuelve una redirección al método correcto con un aviso. Si está bien, devuelve None.
+    """
+    if establecimiento.permite_metodo(metodo):
+        return None
+    messages.warning(
+        request,
+        f'"{establecimiento.nombre}" se cargó con el método '
+        f'"{establecimiento.get_metodo_caracterizacion_display()}": se edita solo desde ahí.'
+    )
+    return redirect(establecimiento.url_edicion, pk=establecimiento.pk)
+
+
+def _rechazo_json_si_otro_metodo(establecimiento, metodo):
+    """Lo mismo para los guardados por JavaScript (fetch): responde 403 en vez de redirigir."""
+    if establecimiento.permite_metodo(metodo):
+        return None
+    return JsonResponse({
+        'status': 'error', 'ok': False,
+        'mensaje': 'Este establecimiento se edita con otro método de carga.',
+    }, status=403)
 
 
 def get_color_por_tipo_uso(tipo_uso, cultivo=''):
@@ -104,30 +127,22 @@ def establecimiento_crear(request):
         if form.is_valid():
             establecimiento = form.save(commit=False)
             establecimiento.usuario = request.user  # [Integración] dueño
+            # [Unificación] El método elegido queda guardado: la finca se edita solo con ese
             if modo == 'disenador':
                 establecimiento.metodo_caracterizacion = MetodoCaracterizacion.CROQUIS_MANUAL
+            elif modo == 'mapa':
+                establecimiento.metodo_caracterizacion = MetodoCaracterizacion.MAPA
             else:
                 establecimiento.metodo_caracterizacion = MetodoCaracterizacion.CUESTIONARIO
             establecimiento.save()
 
             # Inicializar registros complementarios
-            CroquisManual.objects.get_or_create(
-                establecimiento=establecimiento,
-                defaults={
-                    'perimetro_largo_m': establecimiento.largo_estimado_m or Decimal('100.00'),
-                    'perimetro_ancho_m': establecimiento.ancho_estimado_m or Decimal('100.00'),
-                }
-            )
+            CroquisManual.objects.get_or_create(establecimiento=establecimiento)
 
             messages.success(request, f'¡Establecimiento "{establecimiento.nombre}" registrado exitosamente!')
 
-            if modo == 'disenador':
-                return redirect('campos:croquis_manual', pk=establecimiento.pk)
-            elif modo == 'mapa':
-                # [Unificación] El mapa de Sol se reemplazó por el de Agus (app mapa)
-                return redirect('mapa:delimitar_terreno', pk=establecimiento.pk)
-            else:
-                return redirect('campos:parcelas_cuestionario', pk=establecimiento.pk)
+            # Sigue en la pantalla del método elegido (cuestionario, croquis o mapa de Agus)
+            return redirect(establecimiento.url_edicion, pk=establecimiento.pk)
     else:
         form = EstablecimientoForm()
 
@@ -194,6 +209,9 @@ def parcelas_cuestionario(request, pk):
     Al finalizar, genera inmediatamente el croquis automático.
     """
     establecimiento = _establecimiento_del_usuario(request, pk)
+    otro_metodo = _redirigir_si_otro_metodo(request, establecimiento, MetodoCaracterizacion.CUESTIONARIO)
+    if otro_metodo:
+        return otro_metodo
     parcelas = establecimiento.parcelas.all()
 
     if request.method == 'POST':
@@ -206,37 +224,30 @@ def parcelas_cuestionario(request, pk):
             parcela = form.save(commit=False)
             parcela.establecimiento = establecimiento
             parcela.origen = 'cuestionario'
+            # [Unificación] Nombre y color se asignan solos (ya no se piden en el formulario)
+            parcela.nombre = Parcela.nombre_automatico(
+                parcela.tipo_uso, parcela.cultivo, _proximo_numero_flores(establecimiento))
+            parcela.color_hex = get_color_por_tipo_uso(parcela.tipo_uso)
 
-            # Validar que no se supere la superficie total si se ingresó superficie
-            if parcela.superficie_ha:
-                nueva_distribuida = establecimiento.superficie_distribuida_ha + parcela.superficie_ha
-                if nueva_distribuida > establecimiento.superficie_total_ha:
-                    exceso = nueva_distribuida - establecimiento.superficie_total_ha
-                    form.add_error(
-                        'superficie_ha',
-                        f'La superficie ingresada supera la superficie total del predio por {exceso:.4f} ha. '
-                        f'Disponible actualmente: {establecimiento.superficie_restante_ha:.4f} ha.'
-                    )
-                else:
-                    if not parcela.color_hex:
-                        parcela.color_hex = get_color_por_tipo_uso(parcela.tipo_uso, parcela.cultivo)
-                    parcela.save()
-
-                    # Actualizar método en establecimiento si corresponde
-                    if establecimiento.metodo_caracterizacion == MetodoCaracterizacion.CROQUIS_MANUAL:
-                        establecimiento.metodo_caracterizacion = MetodoCaracterizacion.AMBOS
-                        establecimiento.save(update_fields=['metodo_caracterizacion'])
-
-                    messages.success(request, f'Parcela "{parcela.nombre}" agregada correctamente.')
-                    
-                    # Si el botón presionado fue "Guardar y generar croquis inmediato"
-                    if 'guardar_y_ver_croquis' in request.POST:
-                        return redirect('campos:croquis_automatico', pk=establecimiento.pk)
-
-                    return redirect('campos:parcelas_cuestionario', pk=establecimiento.pk)
+            # Validar que no se supere la superficie total (la superficie es obligatoria)
+            nueva_distribuida = establecimiento.superficie_distribuida_ha + parcela.superficie_ha
+            if nueva_distribuida > establecimiento.superficie_total_ha:
+                exceso = nueva_distribuida - establecimiento.superficie_total_ha
+                form.add_error(
+                    'superficie_ha',
+                    f'La superficie ingresada supera la superficie total del predio por {exceso:.4f} ha. '
+                    f'Disponible actualmente: {establecimiento.superficie_restante_ha:.4f} ha.'
+                )
             else:
                 parcela.save()
-                messages.success(request, f'Parcela "{parcela.nombre}" agregada.')
+                # [Unificación] Ya no se cambia el método a "ambos": la finca sigue siendo de cuestionario
+
+                messages.success(request, f'Sector "{parcela.nombre}" agregado correctamente.')
+
+                # Si el botón presionado fue "Guardar y generar croquis inmediato"
+                if 'guardar_y_ver_croquis' in request.POST:
+                    return redirect('campos:croquis_automatico', pk=establecimiento.pk)
+
                 return redirect('campos:parcelas_cuestionario', pk=establecimiento.pk)
     else:
         form = ParcelaForm()
@@ -245,7 +256,6 @@ def parcelas_cuestionario(request, pk):
         'establecimiento': establecimiento,
         'parcelas': parcelas,
         'form': form,
-        'colores': COLORES_POLICAMPO,
         'superficie_total': establecimiento.superficie_total_ha,
         'superficie_distribuida': establecimiento.superficie_distribuida_ha,
         'superficie_restante': establecimiento.superficie_restante_ha,
@@ -260,6 +270,9 @@ def parcela_editar(request, pk, parcela_id):
     Editar parcela existente.
     """
     establecimiento = _establecimiento_del_usuario(request, pk)
+    otro_metodo = _redirigir_si_otro_metodo(request, establecimiento, MetodoCaracterizacion.CUESTIONARIO)
+    if otro_metodo:
+        return otro_metodo
     parcela = get_object_or_404(Parcela, pk=parcela_id, establecimiento=establecimiento)
 
     if request.method == 'POST':
@@ -281,8 +294,14 @@ def parcela_editar(request, pk, parcela_id):
                     f'Superficie máxima disponible: {disponible:.4f} ha.'
                 )
             else:
-                form.save()
-                messages.success(request, f'Parcela "{parcela.nombre}" actualizada.')
+                parcela = form.save(commit=False)
+                # [Unificación] Si cambió el tipo o el cultivo, el nombre y el color se recalculan
+                parcela.nombre = Parcela.nombre_automatico(
+                    parcela.tipo_uso, parcela.cultivo,
+                    _proximo_numero_flores(establecimiento, excluir_pk=parcela.pk))
+                parcela.color_hex = get_color_por_tipo_uso(parcela.tipo_uso)
+                parcela.save()
+                messages.success(request, f'Sector "{parcela.nombre}" actualizado.')
                 return redirect('campos:parcelas_cuestionario', pk=establecimiento.pk)
     else:
         form = ParcelaForm(instance=parcela)
@@ -291,7 +310,6 @@ def parcela_editar(request, pk, parcela_id):
         'establecimiento': establecimiento,
         'parcela': parcela,
         'form': form,
-        'colores': COLORES_POLICAMPO,
     })
 
 
@@ -302,6 +320,9 @@ def parcela_eliminar(request, pk, parcela_id):
     Eliminar parcela.
     """
     establecimiento = _establecimiento_del_usuario(request, pk)
+    otro_metodo = _redirigir_si_otro_metodo(request, establecimiento, MetodoCaracterizacion.CUESTIONARIO)
+    if otro_metodo:
+        return otro_metodo
     parcela = get_object_or_404(Parcela, pk=parcela_id, establecimiento=establecimiento)
     nombre = parcela.nombre
     parcela.delete()
@@ -455,12 +476,14 @@ def croquis_manual(request, pk):
     Las parcelas dibujadas se sincronizan directamente en la tabla Parcela.
     """
     establecimiento = _establecimiento_del_usuario(request, pk)
+    otro_metodo = _redirigir_si_otro_metodo(request, establecimiento, MetodoCaracterizacion.CROQUIS_MANUAL)
+    if otro_metodo:
+        return otro_metodo
     croquis, _ = CroquisManual.objects.get_or_create(establecimiento=establecimiento)
     parcelas = establecimiento.parcelas.all()
 
     # Preparar datos de parcelas para el editor interactivo
     parcelas_list = []
-    colores_disponibles = [c[0] for c in COLORES_POLICAMPO]
 
     for idx, p in enumerate(parcelas):
         # Si tiene geometría guardada la usamos, si no le asignamos una posición visual inicial
@@ -476,7 +499,7 @@ def croquis_manual(request, pk):
             'tipo_uso': p.tipo_uso,
             'cultivo': p.cultivo or '',
             'superficie_ha': float(p.superficie_ha) if p.superficie_ha is not None else None,
-            'color': p.color_hex or colores_disponibles[idx % len(colores_disponibles)],
+            'color': p.color_hex or get_color_por_tipo_uso(p.tipo_uso),
             'x': x,
             'y': y,
             'w': w,
@@ -484,22 +507,20 @@ def croquis_manual(request, pk):
             'origen': p.origen,
         })
 
-    # Calcular dimensiones reales del establecimiento en metros para la escala del lienzo
+    # Escala del lienzo en metros. [Unificación] Ya no se piden largo y ancho: el terreno se
+    # representa como un cuadrado con la superficie total (ej.: 2,5 ha = 158 m × 158 m).
+    # Así la escala siempre coincide con la superficie real del campo.
     sup_total_ha_float = float(establecimiento.superficie_total_ha or Decimal('1.0'))
-    sup_total_m2_float = sup_total_ha_float * 10000.0
-    lado_default = round(math.sqrt(sup_total_m2_float), 2)
-    largo_total_m = float(establecimiento.largo_estimado_m) if establecimiento.largo_estimado_m else lado_default
-    ancho_total_m = float(establecimiento.ancho_estimado_m) if establecimiento.ancho_estimado_m else lado_default
+    lado_m = round(math.sqrt(sup_total_ha_float * 10000.0), 2)
 
     context = {
         'establecimiento': establecimiento,
         'croquis': croquis,
-        'colores': COLORES_POLICAMPO,
-        'tipos_uso': TipoUso.choices,
+        'tipos_uso': TIPOS_SECTOR,
         'parcelas_json': json.dumps(parcelas_list),
         'sup_total_ha_json': json.dumps(sup_total_ha_float),
-        'largo_total_m_json': json.dumps(largo_total_m),
-        'ancho_total_m_json': json.dumps(ancho_total_m),
+        'largo_total_m_json': json.dumps(lado_m),
+        'ancho_total_m_json': json.dumps(lado_m),
         'superficie_total': establecimiento.superficie_total_ha,
         'superficie_distribuida': establecimiento.superficie_distribuida_ha,
         'superficie_restante': establecimiento.superficie_restante_ha,
@@ -516,20 +537,34 @@ def croquis_manual_guardar(request, pk):
     garantizando que la información quede en la misma estructura unificada para Proceso.
     """
     establecimiento = _establecimiento_del_usuario(request, pk)
+    rechazo = _rechazo_json_si_otro_metodo(establecimiento, MetodoCaracterizacion.CROQUIS_MANUAL)
+    if rechazo:
+        return rechazo
 
     try:
         data = json.loads(request.body.decode('utf-8'))
         parcelas_recibidas = data.get('parcelas', [])
         ids_recibidos = []
+        # [Unificación] Los sectores de flores se numeran en el orden del dibujo; también se
+        # cuentan los que vinieron del cuestionario (esos no se tocan acá).
+        numero_flores = establecimiento.parcelas.filter(
+            tipo_uso=TipoUso.FLORES, origen='cuestionario').count()
 
         for p_data in parcelas_recibidas:
             pid = p_data.get('id')
-            nombre = p_data.get('nombre', 'Parcela').strip() or 'Parcela'
             tipo_uso = p_data.get('tipo_uso', 'cultivo_agricola')
-            cultivo = p_data.get('cultivo', '').strip()
+            if tipo_uso not in TipoUso.values:
+                tipo_uso = TipoUso.CULTIVO
+            cultivo = (p_data.get('cultivo') or '').strip()
+            if tipo_uso == TipoUso.FLORES:
+                cultivo = ''
+                numero_flores += 1
+            # [Unificación] Nombre y color se asignan solos (ya no se piden en el panel)
+            nombre = Parcela.nombre_automatico(tipo_uso, cultivo, numero_flores)
+            color = get_color_por_tipo_uso(tipo_uso)
+            # La superficie sale del dibujo (el editor la calcula con la escala del campo)
             sup_val = p_data.get('superficie_ha')
-            superficie_ha = Decimal(str(sup_val)) if sup_val not in (None, '', 0) else None
-            color = p_data.get('color', '#2b8a3e')
+            superficie_ha = Decimal(str(sup_val)).quantize(Decimal('0.0001')) if sup_val not in (None, '', 0) else None
             geometria = {
                 'x': float(p_data.get('x', 50)),
                 'y': float(p_data.get('y', 50)),
@@ -578,12 +613,7 @@ def croquis_manual_guardar(request, pk):
             origen='croquis_manual'
         ).exclude(pk__in=ids_recibidos).delete()
 
-        # Actualizar método de caracterización
-        if establecimiento.metodo_caracterizacion == MetodoCaracterizacion.CUESTIONARIO and Parcela.objects.filter(establecimiento=establecimiento, origen='cuestionario').exists():
-            establecimiento.metodo_caracterizacion = MetodoCaracterizacion.AMBOS
-        else:
-            establecimiento.metodo_caracterizacion = MetodoCaracterizacion.CROQUIS_MANUAL
-        establecimiento.save(update_fields=['metodo_caracterizacion'])
+        # [Unificación] Ya no se cambia el método de la finca al guardar: queda el que se eligió
 
         return JsonResponse({
             'status': 'ok',

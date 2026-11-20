@@ -5,6 +5,7 @@ from .models import (
     Parcela,
     CroquisManual,
     COLORES_POLICAMPO,
+    TIPOS_SECTOR,
     TipoUso,
     UbicacionRelativa,
     DepartamentoJujuy,
@@ -23,11 +24,9 @@ class EstablecimientoForm(forms.ModelForm):
             'localidad',
             'ecorregion',
             'superficie_total_ha',
-            'largo_estimado_m',
-            'ancho_estimado_m',
-            'disponibilidad_agua',
-            'cultivo_principal',
         ]
+        # [Unificación] Ya no se piden: cultivo principal, largo y ancho estimados ni
+        # disponibilidad de agua. Los cultivos se cargan después, sector por sector.
         widgets = {
             'nombre': forms.TextInput(attrs={
                 'class': 'form-input',
@@ -59,27 +58,6 @@ class EstablecimientoForm(forms.ModelForm):
                 'min': '0.0001',
                 'required': True,
             }),
-            'largo_estimado_m': forms.NumberInput(attrs={
-                'class': 'form-input',
-                'placeholder': 'Opcional (metros)',
-                'step': '0.1',
-                'min': '1',
-            }),
-            'ancho_estimado_m': forms.NumberInput(attrs={
-                'class': 'form-input',
-                'placeholder': 'Opcional (metros)',
-                'step': '0.1',
-                'min': '1',
-            }),
-            'disponibilidad_agua': forms.Select(attrs={
-                'class': 'form-select',
-            }),
-            'cultivo_principal': forms.TextInput(attrs={
-                'class': 'form-input',
-                'placeholder': 'Ej. Maíz andino, hortalizas de hoja, papa oca...',
-                'autocomplete': 'off',
-                'required': True,
-            }),
         }
         help_texts = {
             'direccion': 'Permite ubicar el predio en el territorio (no inventa la distribución interna de cultivos).',
@@ -94,27 +72,26 @@ class EstablecimientoForm(forms.ModelForm):
 
 
 class ParcelaForm(forms.ModelForm):
+    """
+    Un sector del cuestionario. [Unificación] Solo se piden los datos del esquema del grupo:
+    tipo (cultivo o sector de flores), nombre del cultivo, superficie y ubicación.
+    El nombre del sector y el color se asignan solos en la vista.
+    """
+    tipo_uso = forms.ChoiceField(
+        choices=TIPOS_SECTOR,
+        label='Tipo de sector',
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_tipo_uso'}),
+    )
+
     class Meta:
         model = Parcela
         fields = [
-            'nombre',
             'tipo_uso',
             'cultivo',
             'superficie_ha',
             'ubicacion_relativa',
-            'color_hex',
-            'observaciones',
         ]
         widgets = {
-            'nombre': forms.TextInput(attrs={
-                'class': 'form-input',
-                'placeholder': 'Ej. Parcela Norte / Tablón 1 / Huerta',
-                'required': True,
-            }),
-            'tipo_uso': forms.Select(attrs={
-                'class': 'form-select',
-                'id': 'id_tipo_uso',
-            }),
             'cultivo': forms.TextInput(attrs={
                 'class': 'form-input',
                 'placeholder': 'Ej. Maíz morado, habas, lechuga...',
@@ -132,26 +109,24 @@ class ParcelaForm(forms.ModelForm):
                 'class': 'form-select',
                 'id': 'id_ubicacion_relativa',
             }),
-            'color_hex': forms.HiddenInput(attrs={
-                'id': 'id_color_hex',
-            }),
-            'observaciones': forms.Textarea(attrs={
-                'class': 'form-textarea',
-                'placeholder': 'Detalles adicionales, pendiente, sombra, riego...',
-                'rows': 2,
-            }),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # En el cuestionario la superficie es obligatoria (en el croquis la calcula el dibujo)
+        self.fields['superficie_ha'].required = True
 
     def clean_superficie_ha(self):
         val = self.cleaned_data.get('superficie_ha')
         if val is not None and val <= 0:
-            raise forms.ValidationError("La superficie de la parcela debe ser mayor a cero.")
+            raise forms.ValidationError("La superficie del sector debe ser mayor a cero.")
         return val
 
     def clean(self):
         cleaned_data = super().clean()
         tipo_uso = cleaned_data.get('tipo_uso')
-        cultivo = cleaned_data.get('cultivo')
-        if tipo_uso in [TipoUso.CULTIVO, TipoUso.PASTURA] and not cultivo:
-            self.add_error('cultivo', 'Indicá el nombre del cultivo o especie sembrada.')
+        if tipo_uso == TipoUso.CULTIVO and not (cleaned_data.get('cultivo') or '').strip():
+            self.add_error('cultivo', 'Indicá el nombre del cultivo.')
+        if tipo_uso == TipoUso.FLORES:
+            cleaned_data['cultivo'] = ''  # un sector de flores no lleva cultivo
         return cleaned_data

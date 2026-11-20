@@ -370,3 +370,63 @@
         padding: 1.25rem 0.85rem;
     }
 }
+
+/* [Unificación] Bloque final "Solicitar diagnóstico" (cuestionario y croquis) */
+.solicitar-diagnostico {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background-color: #fff7ed;
+    border: 1.5px solid #fdba74;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+}
+
+.solicitar-diagnostico h2 {
+    font-size: 1.2rem;
+    color: var(--color-primary-dark);
+    margin-bottom: 0.25rem;
+}
+
+.solicitar-diagnostico p {
+    font-size: 0.92rem;
+    color: #4b5563;
+    margin: 0;
+    max-width: 620px;
+}
+
+.solicitar-diagnostico-accion {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.btn-diagnostico {
+    background-color: #e5862a;
+    color: #ffffff;
+    padding-left: 1.75rem;
+    padding-right: 1.75rem;
+}
+
+/* Mientras no exista el módulo de diagnóstico, el botón se ve pero no se puede usar */
+.btn-diagnostico:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.solicitar-diagnostico-nota {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #9a3412;
+}
+
+@media (max-width: 600px) {
+    .solicitar-diagnostico-accion,
+    .btn-diagnostico {
+        width: 100%;
+    }
+}

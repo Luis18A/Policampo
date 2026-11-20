@@ -16,7 +16,7 @@
             {% elif modo == 'disenador' %}
             <span class="brand-badge" style="background-color: #ffedd5; color: #9a3412;">Modo: Diseñador Manual</span>
             {% elif modo == 'mapa' %}
-            <span class="brand-badge" style="background-color: #e0f2fe; color: #075985;">Modo: Ubicación Satelital</span>
+            <span class="brand-badge" style="background-color: #e0f2fe; color: #075985;">Modo: Mapa</span>
             {% endif %}
         </div>
         <h1 style="color: var(--color-primary-dark);">{{ titulo }}</h1>
@@ -105,57 +105,7 @@
                     {% endif %}
                 </div>
 
-                <!-- Cultivo Principal -->
-                <div class="form-group">
-                    <label class="form-label" for="{{ form.cultivo_principal.id_for_label }}">
-                        Cultivo principal del predio *
-                    </label>
-                    {{ form.cultivo_principal }}
-                    {% if form.cultivo_principal.errors %}
-                    <span class="form-error">{{ form.cultivo_principal.errors.0 }}</span>
-                    {% endif %}
-                </div>
-
-                <!-- Disponibilidad de Agua -->
-                <div class="form-group">
-                    <label class="form-label" for="{{ form.disponibilidad_agua.id_for_label }}">
-                        Disponibilidad y fuente de agua *
-                    </label>
-                    {{ form.disponibilidad_agua }}
-                    {% if form.disponibilidad_agua.errors %}
-                    <span class="form-error">{{ form.disponibilidad_agua.errors.0 }}</span>
-                    {% endif %}
-                </div>
-
-                <!-- Dimensiones Opcionales -->
-                <div class="form-group full-width" style="margin-top: 0.5rem; padding-top: 1rem; border-top: 1px dashed var(--color-border);">
-                    <div style="font-weight: 700; color: var(--color-primary-dark); margin-bottom: 0.25rem;">
-                        Medidas estimadas del terreno (Opcional)
-                    </div>
-                    <p style="font-size: 0.88rem; color: #6b7280; margin-bottom: 0.75rem;">
-                        Si conocés el largo y el ancho aproximados en metros podés indicarlos aquí. De lo contrario, dejálos vacíos.
-                    </p>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="{{ form.largo_estimado_m.id_for_label }}">
-                        Largo estimado (metros)
-                    </label>
-                    {{ form.largo_estimado_m }}
-                    {% if form.largo_estimado_m.errors %}
-                    <span class="form-error">{{ form.largo_estimado_m.errors.0 }}</span>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="{{ form.ancho_estimado_m.id_for_label }}">
-                        Ancho estimado (metros)
-                    </label>
-                    {{ form.ancho_estimado_m }}
-                    {% if form.ancho_estimado_m.errors %}
-                    <span class="form-error">{{ form.ancho_estimado_m.errors.0 }}</span>
-                    {% endif %}
-                </div>
+                {# [Unificación] Ya no se piden cultivo principal, agua ni largo/ancho estimados #}
             </div>
 
             <!-- Botones de Acción -->

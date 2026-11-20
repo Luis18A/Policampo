@@ -17,7 +17,12 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_POST
 
-from campos.views import _establecimiento_del_usuario
+from campos.models import MetodoCaracterizacion
+from campos.views import (
+    _establecimiento_del_usuario,
+    _rechazo_json_si_otro_metodo,
+    _redirigir_si_otro_metodo,
+)
 
 from .models import DisenoEspacial
 
@@ -37,6 +42,10 @@ def _centro_del_diseno(diseno):
 @login_required
 def vista_mapa(request, pk):
     establecimiento = _establecimiento_del_usuario(request, pk)
+    # [Unificación] Solo las fincas cargadas por el mapa se editan acá
+    otro_metodo = _redirigir_si_otro_metodo(request, establecimiento, MetodoCaracterizacion.MAPA)
+    if otro_metodo:
+        return otro_metodo
     diseno = DisenoEspacial.objects.filter(establecimiento=establecimiento).first()
 
     # [Unificación] El mapa de Sol se eliminó: el contorno y el centro iniciales
@@ -57,6 +66,9 @@ def vista_mapa(request, pk):
 @require_POST
 def guardar_diseno(request, pk):
     establecimiento = _establecimiento_del_usuario(request, pk)
+    rechazo = _rechazo_json_si_otro_metodo(establecimiento, MetodoCaracterizacion.MAPA)
+    if rechazo:
+        return rechazo
 
     if len(request.body) > TAMANIO_MAXIMO_BYTES:
         return JsonResponse({'ok': False, 'mensaje': 'El diseño es demasiado grande.'}, status=400)
