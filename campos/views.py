@@ -125,7 +125,7 @@ def establecimiento_crear(request):
                 return redirect('campos:croquis_manual', pk=establecimiento.pk)
             elif modo == 'mapa':
                 # [Unificación] El mapa de Sol se reemplazó por el de Agus (app mapa)
-                return redirect('mapa:delimitar_terreno', pk=establecimiento.pk)
+                return redirect('mapa:registro_terreno', pk=establecimiento.pk)
             else:
                 return redirect('campos:parcelas_cuestionario', pk=establecimiento.pk)
     else:

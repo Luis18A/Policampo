@@ -86,7 +86,7 @@
                 <div class="welcome-card-action">
                     {# [Unificación] Lleva al mapa de Agus (app mapa); el mapa de Sol se eliminó #}
                     {% if ultimo_campo %}
-                    <a href="{% url 'mapa:delimitar_terreno' pk=ultimo_campo.pk %}" class="welcome-card-btn">
+                    <a href="{% url 'mapa:registro_terreno' pk=ultimo_campo.pk %}" class="welcome-card-btn">
                         Buscar mi establecimiento &rarr;
                     </a>
                     {% else %}
@@ -114,7 +114,7 @@
                 Ver ficha de {{ ultimo_campo.nombre }}
             </a>
             {# [Integración] Acceso directo al diseño en el mapa (app mapa, parte de Agus) #}
-            <a href="{% url 'mapa:delimitar_terreno' pk=ultimo_campo.pk %}" class="btn btn-secondary btn-sm">
+            <a href="{% url 'mapa:registro_terreno' pk=ultimo_campo.pk %}" class="btn btn-secondary btn-sm">
                 🌼 Diseñar en el mapa
             </a>
             <a href="{% url 'campos:establecimientos_lista' %}" class="btn btn-primary btn-sm">

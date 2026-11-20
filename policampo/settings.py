@@ -93,14 +93,22 @@ WSGI_APPLICATION = "policampo.wsgi.application"
 
 # --- Base de datos (PostgreSQL) ------------------------------------------------
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": variable_obligatoria("DB_NAME"),
+#         "USER": variable_obligatoria("DB_USER"),
+#         "PASSWORD": variable_obligatoria("DB_PASSWORD"),
+#         "HOST": os.environ.get("DB_HOST", "localhost"),
+#         "PORT": os.environ.get("DB_PORT", "5432"),
+#     }
+# }
+
+# Bypass local para probar el mapa sin PostgreSQL
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": variable_obligatoria("DB_NAME"),
-        "USER": variable_obligatoria("DB_USER"),
-        "PASSWORD": variable_obligatoria("DB_PASSWORD"),
-        "HOST": os.environ.get("DB_HOST", "localhost"),
-        "PORT": os.environ.get("DB_PORT", "5432"),
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 

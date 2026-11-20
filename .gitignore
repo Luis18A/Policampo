@@ -22,3 +22,12 @@ Thumbs.db
 .claude/
 docs/
 CLAUDE.md
+
+# Base de datos local
+db.sqlite3
+
+# Archivos de caché de Python y entorno virtual
+__pycache__/
+*.pyc
+venv/
+env/

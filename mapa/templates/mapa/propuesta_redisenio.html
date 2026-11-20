@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% comment %}
+    [Integración] Página 2 de la arquitectura dividida: Propuesta de Rediseño.
+    Hereda de base.html y define los espacios (slots) para que el resto del equipo
+    (Diagnóstico, Plantas, Calendario) incruste sus submódulos mediante {% include %}.
+{% endcomment %}
+
+{% block titulo %}Propuesta de Rediseño · PoliCampo{% endblock %}
+
+{% block estilos_extra %}
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'mapa/css/mapa.css' %}?v=3" />
+{% endblock %}
+
+{# Pantalla a ancho completo, sin pie de página #}
+{% block pie %}{% endblock %}
+
+{% block contenido %}
+<div class="page-salida">
+    {% csrf_token %}
+    <!-- Encabezado superior -->
+
+    <main class="salida-container">
+
+        <!-- Banner si no hay terreno cargado todavía -->
+        <div class="alerta-sin-datos oculto" id="alerta-sin-datos">
+            <div>
+                <strong>Todavía no hay un terreno registrado.</strong>
+                Podés ingresar los datos en la pantalla de carga o cargar una finca de ejemplo para probar los diseños de corredores.
+            </div>
+            <div class="alerta-sin-datos-actions">
+                <a href="{% url 'mapa:registro_terreno' pk=establecimiento.pk %}" class="btn btn-primary btn-sm">Ir a cargar terreno</a>
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-demo-banner">📍 Cargar ejemplo</button>
+            </div>
+        </div>
+
+        <!-- Barra resumen del establecimiento cargado -->
+        <section class="resumen-finca-bar oculto" id="resumen-finca-bar">
+            <div class="finca-dato">
+                <span class="finca-label">Establecimiento</span>
+                <strong id="out-nombre-finca">—</strong>
+            </div>
+            <div class="finca-dato">
+                <span class="finca-label">Ubicación</span>
+                <strong id="out-ubicacion-finca">—</strong>
+            </div>
+            <div class="finca-dato">
+                <span class="finca-label">Ecorregión</span>
+                <strong id="out-ecorregion-finca">—</strong>
+            </div>
+            <div class="finca-dato">
+                <span class="finca-label">Superficie Total</span>
+                <strong id="out-superficie-finca">—</strong>
+            </div>
+            <div class="finca-dato">
+                <span class="finca-label">Cultivos declarados</span>
+                <strong id="out-cultivos-finca">—</strong>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 1 (ARRIBA): ESPACIO RESERVADO PARA EL DIAGNÓSTICO -->
+        <section id="modulo-diagnostico" class="section-slot">
+            <div class="section-slot-header">
+                <div>
+                    <span class="slot-tag">Módulo Diagnóstico · Espacio del compañero</span>
+                    <h2>Diagnóstico del Establecimiento</h2>
+                </div>
+                <span class="slot-status-pill" id="diagnostico-estado-pill">Esperando datos del mapa</span>
+            </div>
+
+            <div class="slot-placeholder-body">
+                <p class="slot-hint">
+                    <strong>Zona reservada para el módulo de Diagnóstico.</strong>
+                </p>
+                <div class="diagnostico-sync-bar" id="diagnostico-sync-bar">
+                    <div>
+                        <span class="sync-label">Referencia espacial en tiempo real (desde el Mapa):</span>
+                        <p id="diagnostico-sync-texto" class="sync-texto">Cargá o dibujá un terreno para visualizar la cobertura floral actual.</p>
+                    </div>
+                    <div class="sync-badge-pct" id="diagnostico-sync-pct">0.0%</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 2 (CENTRO): MAPA DE SALIDA — DISEÑOS DE CORREDORES FLORALES -->
+        <section id="modulo-mapa-salida" class="mapa-salida-card">
+            <div class="mapa-salida-header">
+                <div>
+                    <span class="slot-tag slot-tag-activo">Módulo Mapa · Propuesta Espacial</span>
+                    <h2>Diseño de Corredores Florales en el Terreno</h2>
+                </div>
+                <div class="mapa-salida-header-actions">
+                    <!-- Botón para volver -->
+                    <a href="{% url 'mapa:registro_terreno' pk=establecimiento.pk %}" class="btn btn-secondary btn-sm" title="Volver al dibujo de la parcela">
+                        ← Editar Terreno
+                    </a>
+    
+                    <!-- Tus botones originales de exportación y guardado -->
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-descargar-geojson" disabled>
+                        ⬇ GeoJSON
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-ver-json" disabled>
+                        { } Ver JSON
+                    </button>
+                    <button type="button" class="btn btn-success btn-sm" id="btn-guardar-propuesta" disabled>
+                        💾 Guardar Propuesta
+                    </button>
+    
+                    <!-- Botón para cerrar -->
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="window.location.href='{% url 'campos:pantalla_entrada' %}'">
+                        × Cerrar propuesta
+                    </button>
+                </div>
+            </div>
+
+            <div class="salida-map-grid">
+                <aside class="salida-controles">
+                    <div class="form-group">
+                        <label for="tipo-franja">Disposición del diseño</label>
+                        <select id="tipo-franja" disabled>
+                            <option value="perimetral">Cerco Perimetral (Bordes)</option>
+                            <option value="transversal">Corredores Transversales (Franjas)</option>
+                            <option value="central">Islas de Biodiversidad (Grupos aislados)</option>
+                            <option value="matriz">Diseño en Matriz (Perimetral + Franjas)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="label-between">
+                            <label for="porcentaje-area">Objetivo total de biodiversidad</label>
+                            <strong id="valor-porcentaje-label">20%</strong>
+                        </div>
+                        <div class="range-row">
+                            <input type="range" id="porcentaje-slider" min="5" max="40" step="1" value="20" disabled>
+                            <input type="number" id="porcentaje-area" min="1" max="60" step="1" value="20" disabled aria-label="Porcentaje del área">
+                        </div>
+                        <small class="help-text">Criterio agroecológico: mínimo recomendado <strong>20%</strong>.</small>
+                    </div>
+
+                    <div class="box-existentes-control oculto" id="box-existentes-control">
+                        <label class="checkbox-inline">
+                            <input type="checkbox" id="descontar-existentes" checked>
+                            <span>Descontar zonas florales existentes del objetivo</span>
+                        </label>
+                        <p class="help-text" id="aviso-existentes"></p>
+                    </div>
+
+                    <div class="opciones-dinamicas oculto" id="controles-transversal">
+                        <div class="form-group">
+                            <div class="label-between">
+                                <label for="num-corredores">Cantidad de franjas internas</label>
+                                <strong id="valor-corredores-label">3</strong>
+                            </div>
+                            <input type="range" id="num-corredores" min="1" max="6" step="1" value="3" disabled>
+                        </div>
+                        <div class="form-group">
+                            <div class="label-between">
+                                <label for="angulo-corredores">Orientación de las franjas</label>
+                                <strong id="valor-angulo-label">0° (N-S)</strong>
+                            </div>
+                            <input type="range" id="angulo-corredores" min="0" max="165" step="15" value="0" disabled>
+                            <div class="chips-orientacion">
+                                <button type="button" class="chip activo" data-angulo="0">N-S (0°)</button>
+                                <button type="button" class="chip" data-angulo="45">NE-SO (45°)</button>
+                                <button type="button" class="chip" data-angulo="90">E-O (90°)</button>
+                                <button type="button" class="chip" data-angulo="135">NO-SE (135°)</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="opciones-dinamicas oculto" id="controles-islas">
+                        <div class="form-group">
+                            <div class="label-between">
+                                <label for="densidad-islas">Distribución de islas (cuadrícula)</label>
+                                <strong id="valor-islas-label">3 × 3</strong>
+                            </div>
+                            <input type="range" id="densidad-islas" min="2" max="5" step="1" value="3" disabled>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <span class="stat-label">Superficie Total</span>
+                            <span class="stat-value" id="area-total">0.00 ha</span>
+                            <span class="stat-sub" id="area-total-sub">0 m²</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">Perímetro / Ancho</span>
+                            <span class="stat-value" id="perimetro-total">0 m</span>
+                            <span class="stat-sub" id="ancho-banda">Ancho banda: —</span>
+                        </div>
+                        <div class="stat-box stat-cultivo">
+                            <span class="stat-label">Área Productiva</span>
+                            <span class="stat-value" id="area-productiva">0.00 ha</span>
+                            <span class="stat-sub" id="pct-productiva">0.0%</span>
+                        </div>
+                        <div class="stat-box stat-floral">
+                            <span class="stat-label">Biodiversidad Total</span>
+                            <span class="stat-value" id="area-franja">0.00 ha</span>
+                            <span class="stat-sub" id="pct-franja">0.0%</span>
+                        </div>
+                    </div>
+
+                    <div class="subsectores-box">
+                        <span class="label-small">Sectores de cultivo cargados</span>
+                        <ul class="lista-sectores" id="lista-sectores-salida">
+                            <li class="lista-vacia">Sin sectores cargados</li>
+                        </ul>
+                    </div>
+
+                    <div class="subsectores-box subsectores-florales oculto" id="bloque-existentes-salida">
+                        <span class="label-small">🌼 Zonas florales existentes (conservadas)</span>
+                        <ul class="lista-sectores" id="lista-existentes-salida"></ul>
+                    </div>
+
+                    <!-- Inputs ocultos para formulario Django -->
+                    <input type="hidden" id="django-propuesta-geojson" name="propuesta_geojson" value="">
+                    <input type="hidden" id="django-propuesta-json" name="propuesta_redisenio_json" value="">
+                </aside>
+
+                <div class="map-wrapper map-wrapper-salida">
+                    <div class="map-toast oculto" id="map-toast"></div>
+                    <div id="mapa-salida" role="application" aria-label="Mapa con propuesta de corredores florales"></div>
+                    <div class="map-legend">
+                        <h4>Capas del Rediseño</h4>
+                        <label class="legend-item">
+                            <input type="checkbox" id="toggle-capa-parcela" checked>
+                            <span class="swatch swatch-parcela"></span>
+                            <span>Contorno del terreno</span>
+                        </label>
+                        <label class="legend-item">
+                            <input type="checkbox" id="toggle-capa-sectores" checked>
+                            <span class="swatch swatch-sectores"></span>
+                            <span>Sectores de cultivo</span>
+                        </label>
+                        <label class="legend-item">
+                            <input type="checkbox" id="toggle-capa-existentes" checked>
+                            <span class="swatch swatch-floral-existente"></span>
+                            <span>Flores existentes</span>
+                        </label>
+                        <label class="legend-item">
+                            <input type="checkbox" id="toggle-capa-propuesta" checked>
+                            <span class="swatch swatch-floral"></span>
+                            <span>Corredores nuevos</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 3 (ABAJO): ESPACIO RESERVADO PARA CALENDARIO Y PLANTAS -->
+        <section id="modulo-calendario-plantas" class="section-slot">
+            <div class="section-slot-header">
+                <div>
+                    <span class="slot-tag">Módulos Recomendaciones y Calendario · Espacio del compañero</span>
+                    <h2>Propuestas de Plantas de Servicio y Calendario Agronómico</h2>
+                </div>
+            </div>
+
+            <div class="slot-two-cols">
+                <div class="slot-subcard" id="slot-propuestas-plantas">
+                    <div class="slot-subcard-title">🐝 Propuestas de Plantas de Servicio</div>
+                    <p class="slot-hint">Espacio reservado para listar las especies recomendadas.</p>
+                    <div class="slot-context-chips" id="contexto-plantas-chips">
+                        <span class="context-chip">Esperando datos del terreno...</span>
+                    </div>
+                </div>
+
+                <div class="slot-subcard" id="slot-calendario">
+                    <div class="slot-subcard-title">📅 Calendario de Temporadas</div>
+                    <p class="slot-hint">Espacio reservado para incrustar el módulo de calendario.</p>
+                    <div class="calendario-wireframe" aria-hidden="true">
+                        <span>Ene</span><span>Feb</span><span>Mar</span><span>Abr</span>
+                        <span>May</span><span>Jun</span><span>Jul</span><span>Ago</span>
+                        <span>Sep</span><span>Oct</span><span>Nov</span><span>Dic</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal JSON -->
+    <div class="modal-backdrop oculto" id="modal-json" role="dialog" aria-modal="true" aria-labelledby="modal-json-titulo">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-json-titulo">Propuesta de Rediseño (GeoJSON + Datos para Django)</h3>
+                <button type="button" class="btn-close" id="btn-cerrar-modal" aria-label="Cerrar">&times;</button>
+            </div>
+            <div class="modal-body">
+                <pre id="preview-json-code"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-copiar-json">📋 Copiar JSON</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btn-cerrar-modal-2">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts_extra %}
+    <!-- 1. Definición de variables globales para la API de Django -->
+    <script>
+        {% if terreno_json %}
+        window.POLICAMPO_TERRENO_INICIAL = {{ terreno_json|safe }};
+        {% endif %}
+        window.POLICAMPO_API_GUARDAR_PROPUESTA_URL = "{% url 'mapa:guardar_propuesta' pk=establecimiento.pk %}";
+    </script>
+
+    <!-- 2. Librerías JS de Mapas y Geometría -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+    <!-- 3. Scripts del módulo -->
+    <script src="{% static 'mapa/js/policampo_common.js' %}?v=10"></script>
+    <script src="{% static 'mapa/js/salida_mapa.js' %}?v=10"></script>
+{% endblock %}
