@@ -7,7 +7,6 @@ from .models import (
     Establecimiento,
     Parcela,
     CroquisManual,
-    UbicacionGeografica,
     DepartamentoJujuy,
     Ecorregion,
     DisponibilidadAgua,
@@ -271,7 +270,7 @@ class SeguridadYPrivacidadTests(TestCase):
         self.client.login(username="beto", password=CONTRASENA)
         pk = self.finca_de_ana.pk
         for nombre in ('establecimiento_detalle', 'establecimiento_editar', 'parcelas_cuestionario',
-                       'croquis_automatico', 'croquis_manual', 'mapa_geografico', 'proceso_datos_api'):
+                       'croquis_automatico', 'croquis_manual', 'proceso_datos_api'):
             res = self.client.get(reverse(f'campos:{nombre}', kwargs={'pk': pk}))
             self.assertEqual(res.status_code, 404, nombre)
 

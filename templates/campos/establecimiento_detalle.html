@@ -104,28 +104,15 @@
             </a>
         </div>
 
-        <!-- Módulo 4: Ubicación Geográfica Satelital -->
-        <div class="card" style="border-top: 4px solid #0284c7; display: flex; flex-direction: column;">
-            <span style="font-size: 2.2rem; margin-bottom: 0.5rem;">🗺️</span>
-            <h3 style="color: var(--color-primary-dark); font-size: 1.15rem; margin-bottom: 0.5rem;">
-                Ubicación Satelital (Jujuy)
-            </h3>
-            <p style="font-size: 0.9rem; color: #4b5563; margin-bottom: 1.25rem; flex: 1;">
-                Localizá tu establecimiento en el mapa satelital y delimitá el perímetro geográfico.
-            </p>
-            <a href="{% url 'campos:mapa_geografico' pk=establecimiento.pk %}" class="btn btn-secondary" style="width: 100%; border-color: #0284c7; color: #0284c7;">
-                Ver en el Mapa &rarr;
-            </a>
-        </div>
+        <!-- [Unificación] Módulo 4: Diseño en el mapa (app mapa, parte de Agus). Reemplaza al mapa satelital de Sol -->
 
-        <!-- [Integración] Módulo 5: Diseño en el mapa (app mapa, parte de Agus) -->
         <div class="card" style="border-top: 4px solid #d63384; display: flex; flex-direction: column;">
             <span style="font-size: 2.2rem; margin-bottom: 0.5rem;">🌼</span>
             <h3 style="color: var(--color-primary-dark); font-size: 1.15rem; margin-bottom: 0.5rem;">
                 Diseño de corredores florales
             </h3>
             <p style="font-size: 0.9rem; color: #4b5563; margin-bottom: 1.25rem; flex: 1;">
-                Sobre el mapa satelital, ubicá los cultivos en el terreno y diseñá las franjas florales.
+                Ubicá tu campo en el mapa satelital, delimitá el terreno, distribuí los cultivos y diseñá las franjas florales.
                 {% with diseno=establecimiento.diseno_espacial %}
                     {% if diseno %}
                         <br><strong>Último diseño:</strong> {{ diseno.porcentaje_floral }} % de corredores

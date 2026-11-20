@@ -49,18 +49,15 @@
                         🌱 Croquis Auto
                     </a>
                 </div>
+                {# [Unificación] El "Mapa Satelital" de Sol se reemplazó por el mapa de Agus (app mapa) #}
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
                     <a href="{% url 'campos:croquis_manual' pk=e.pk %}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem; color: #ea580c;">
                         📐 Diseñador
                     </a>
-                    <a href="{% url 'campos:mapa_geografico' pk=e.pk %}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem; color: #0284c7;">
-                        🗺️ Mapa Satelital
+                    <a href="{% url 'mapa:delimitar_terreno' pk=e.pk %}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem; color: #a61e4d;">
+                        🌼 Mapa
                     </a>
                 </div>
-                {# [Integración] Acceso al diseño de corredores florales en el mapa (app mapa, parte de Agus) #}
-                <a href="{% url 'mapa:delimitar_terreno' pk=e.pk %}" class="btn btn-secondary btn-sm" style="width: 100%; font-size: 0.82rem; color: #a61e4d; border-color: #d63384;">
-                    🌼 Diseñar corredores florales en el mapa
-                </a>
                 <a href="{% url 'campos:establecimiento_detalle' pk=e.pk %}" class="btn btn-primary btn-sm" style="width: 100%; margin-top: 0.25rem;">
                     Ver ficha completa &rarr;
                 </a>

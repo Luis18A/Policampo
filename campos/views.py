@@ -10,7 +10,6 @@ from .models import (
     Establecimiento,
     Parcela,
     CroquisManual,
-    UbicacionGeografica,
     COLORES_POLICAMPO,
     TipoUso,
     UbicacionRelativa,
@@ -119,14 +118,14 @@ def establecimiento_crear(request):
                     'perimetro_ancho_m': establecimiento.ancho_estimado_m or Decimal('100.00'),
                 }
             )
-            UbicacionGeografica.objects.get_or_create(establecimiento=establecimiento)
 
             messages.success(request, f'¡Establecimiento "{establecimiento.nombre}" registrado exitosamente!')
 
             if modo == 'disenador':
                 return redirect('campos:croquis_manual', pk=establecimiento.pk)
             elif modo == 'mapa':
-                return redirect('campos:mapa_geografico', pk=establecimiento.pk)
+                # [Unificación] El mapa de Sol se reemplazó por el de Agus (app mapa)
+                return redirect('mapa:delimitar_terreno', pk=establecimiento.pk)
             else:
                 return redirect('campos:parcelas_cuestionario', pk=establecimiento.pk)
     else:
@@ -175,13 +174,11 @@ def establecimiento_detalle(request, pk):
     establecimiento = _establecimiento_del_usuario(request, pk)
     parcelas = establecimiento.parcelas.all()
     croquis_manual, _ = CroquisManual.objects.get_or_create(establecimiento=establecimiento)
-    ubicacion_gis, _ = UbicacionGeografica.objects.get_or_create(establecimiento=establecimiento)
 
     return render(request, 'campos/establecimiento_detalle.html', {
         'establecimiento': establecimiento,
         'parcelas': parcelas,
         'croquis_manual': croquis_manual,
-        'ubicacion_gis': ubicacion_gis,
         'superficie_total': establecimiento.superficie_total_ha,
         'superficie_distribuida': establecimiento.superficie_distribuida_ha,
         'superficie_restante': establecimiento.superficie_restante_ha,
@@ -608,55 +605,3 @@ def proceso_datos_api(request, pk):
     """
     establecimiento = _establecimiento_del_usuario(request, pk)
     return JsonResponse(establecimiento.get_datos_para_proceso(), json_dumps_params={'indent': 2})
-
-
-@login_required
-def mapa_geografico(request, pk):
-    """
-    Ubicación Geográfica en Jujuy.
-    Permite ubicar el predio en el territorio (sin inventar distribución de cultivos).
-    """
-    establecimiento = _establecimiento_del_usuario(request, pk)
-    ubicacion, _ = UbicacionGeografica.objects.get_or_create(establecimiento=establecimiento)
-
-    context = {
-        'establecimiento': establecimiento,
-        'ubicacion': ubicacion,
-        'geojson_str': json.dumps(ubicacion.poligono_geojson) if ubicacion.poligono_geojson else 'null',
-    }
-    return render(request, 'campos/mapa_geografico.html', context)
-
-
-@login_required
-@require_POST
-def mapa_guardar(request, pk):
-    """
-    API endpoint para persistir coordenadas satelitales.
-    """
-    establecimiento = _establecimiento_del_usuario(request, pk)
-    ubicacion, _ = UbicacionGeografica.objects.get_or_create(establecimiento=establecimiento)
-
-    try:
-        data = json.loads(request.body.decode('utf-8'))
-        lat = data.get('latitud')
-        lng = data.get('longitud')
-        zoom = data.get('zoom', 14)
-        poligono = data.get('poligono_geojson')
-        superficie_ha = data.get('superficie_gis_ha')
-
-        if lat is not None:
-            ubicacion.latitud = Decimal(str(lat))
-        if lng is not None:
-            ubicacion.longitud = Decimal(str(lng))
-        ubicacion.zoom = int(zoom)
-        ubicacion.poligono_geojson = poligono
-        if superficie_ha is not None:
-            ubicacion.superficie_gis_ha = Decimal(str(superficie_ha))
-        ubicacion.save()
-
-        return JsonResponse({
-            'status': 'ok',
-            'mensaje': 'Ubicación geográfica guardada con éxito.',
-        })
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'mensaje': str(e)}, status=400)

@@ -17,7 +17,6 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_POST
 
-from campos.models import UbicacionGeografica
 from campos.views import _establecimiento_del_usuario
 
 from .models import DisenoEspacial
@@ -26,28 +25,24 @@ from .models import DisenoEspacial
 TAMANIO_MAXIMO_BYTES = 2 * 1024 * 1024
 
 
+def _centro_del_diseno(diseno):
+    """Lat/lng guardadas en el diseño (la arma mapa.js en datos["ubicacion"]), o None."""
+    ubicacion = (diseno.datos or {}).get('ubicacion') if diseno else None
+    try:
+        return {'lat': float(ubicacion['lat']), 'lng': float(ubicacion['lng']), 'zoom': 16}
+    except (TypeError, KeyError, ValueError):
+        return None
+
+
 @login_required
 def vista_mapa(request, pk):
     establecimiento = _establecimiento_del_usuario(request, pk)
     diseno = DisenoEspacial.objects.filter(establecimiento=establecimiento).first()
-    ubicacion = UbicacionGeografica.objects.filter(establecimiento=establecimiento).first()
 
-    # Contorno para precargar: el del último diseño guardado o, si no hay,
-    # el límite que se dibujó en el mapa geográfico de Sol.
-    parcela_inicial = None
-    if diseno and diseno.parcela_geojson:
-        parcela_inicial = diseno.parcela_geojson
-    elif ubicacion and ubicacion.poligono_geojson:
-        parcela_inicial = ubicacion.poligono_geojson
-
-    # Centro inicial: la ubicación cargada con el mapa de Sol, si existe
-    centro_inicial = None
-    if ubicacion and ubicacion.latitud is not None and ubicacion.longitud is not None:
-        centro_inicial = {
-            'lat': float(ubicacion.latitud),
-            'lng': float(ubicacion.longitud),
-            'zoom': ubicacion.zoom or 15,
-        }
+    # [Unificación] El mapa de Sol se eliminó: el contorno y el centro iniciales
+    # salen solo del último diseño guardado (si no hay, el mapa arranca en Jujuy).
+    parcela_inicial = diseno.parcela_geojson if diseno else None
+    centro_inicial = _centro_del_diseno(diseno)
 
     return render(request, 'mapa/delimitar_terreno.html', {
         'establecimiento': establecimiento,

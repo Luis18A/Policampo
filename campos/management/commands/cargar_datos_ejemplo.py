@@ -4,7 +4,6 @@ from campos.models import (
     Establecimiento,
     Parcela,
     CroquisManual,
-    UbicacionGeografica,
     DepartamentoJujuy,
     Ecorregion,
     DisponibilidadAgua,
@@ -118,15 +117,6 @@ class Command(BaseCommand):
             )
 
             CroquisManual.objects.get_or_create(establecimiento=est)
-            UbicacionGeografica.objects.get_or_create(
-                establecimiento=est,
-                defaults={
-                    'latitud': Decimal('-23.6264'),
-                    'longitud': Decimal('-65.3934'),
-                    'zoom': 15,
-                    'superficie_gis_ha': Decimal('3.4800'),
-                }
-            )
 
             self.stdout.write(self.style.SUCCESS('¡Datos de ejemplo cargados y sincronizados exitosamente!'))
         else:

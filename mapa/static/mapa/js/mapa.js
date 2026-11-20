@@ -180,8 +180,8 @@
     // =========================================================================
     // 4. INICIALIZACIÓN DEL MAPA LEAFLET Y CAPAS BASE
     // =========================================================================
-    // [Integración] Si el template define POLICAMPO_CENTRO_INICIAL (la ubicación cargada en el mapa
-    // geográfico de Sol), el mapa arranca ahí. Si no, usa el centro original (San Salvador de Jujuy).
+    // [Integración] Si el template define POLICAMPO_CENTRO_INICIAL (la ubicación del último
+    // diseño guardado), el mapa arranca ahí. Si no, usa el centro original (San Salvador de Jujuy).
     const centroInicial = window.POLICAMPO_CENTRO_INICIAL;
     const map = L.map('mapa', {
         center: centroInicial ? [centroInicial.lat, centroInicial.lng] : [-24.1858, -65.2995],

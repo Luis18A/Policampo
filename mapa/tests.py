@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from campos.models import Establecimiento, UbicacionGeografica
+from campos.models import Establecimiento
 
 from .models import DisenoEspacial
 
@@ -99,18 +99,38 @@ class MapaTests(TestCase):
             self.assertEqual(self.guardar(malo).status_code, 400)
         self.assertFalse(DisenoEspacial.objects.exists())
 
-    def test_precarga_el_contorno_del_mapa_de_sol(self):
-        # Si no hay diseño guardado, usa el límite dibujado en el mapa geográfico (app campos)
-        UbicacionGeografica.objects.create(
-            establecimiento=self.finca, latitud=Decimal("-24.375"), longitud=Decimal("-65.095"),
-            zoom=16, poligono_geojson=PARCELA,
-        )
+    def test_sin_diseno_el_mapa_arranca_vacio(self):
         self.client.login(username="ana", password=CONTRASENA)
+        res = self.client.get(self.url_mapa)
+        self.assertIsNone(res.context["parcela_inicial"])
+        self.assertIsNone(res.context["centro_inicial"])
+
+    def test_precarga_el_ultimo_diseno_guardado(self):
+        self.client.login(username="ana", password=CONTRASENA)
+        self.guardar(payload())
         res = self.client.get(self.url_mapa)
         self.assertEqual(res.context["parcela_inicial"], PARCELA)
         self.assertEqual(res.context["centro_inicial"], {"lat": -24.375, "lng": -65.095, "zoom": 16})
 
-    def test_la_ficha_del_establecimiento_tiene_el_acceso(self):
+    def test_inicio_lista_y_ficha_llevan_al_mapa_de_agus(self):
         self.client.login(username="ana", password=CONTRASENA)
-        res = self.client.get(reverse("campos:establecimiento_detalle", kwargs={"pk": self.finca.pk}))
-        self.assertContains(res, self.url_mapa)
+        for nombre, kwargs in (("campos:pantalla_entrada", {}),
+                               ("campos:establecimientos_lista", {}),
+                               ("campos:establecimiento_detalle", {"pk": self.finca.pk})):
+            res = self.client.get(reverse(nombre, kwargs=kwargs))
+            self.assertContains(res, self.url_mapa, msg_prefix=nombre)
+
+    def test_nuevo_predio_en_modo_mapa_termina_en_el_mapa_de_agus(self):
+        self.client.login(username="ana", password=CONTRASENA)
+        url = reverse("campos:establecimiento_crear") + "?modo=mapa"
+        res = self.client.post(url, {
+            "nombre": "Finca Nueva", "direccion": "Ruta 9 km 1", "departamento": "Palpalá",
+            "localidad": "Palpalá", "ecorregion": "Valles Templados", "superficie_total_ha": "2.5",
+            "cultivo_principal": "Maíz", "disponibilidad_agua": "Pozo / Bomba",
+        })
+        nueva = Establecimiento.objects.get(nombre="Finca Nueva")
+        self.assertRedirects(res, reverse("mapa:delimitar_terreno", kwargs={"pk": nueva.pk}))
+
+    def test_el_mapa_de_sol_ya_no_existe(self):
+        self.client.login(username="ana", password=CONTRASENA)
+        self.assertEqual(self.client.get(f"/campos/establecimientos/{self.finca.pk}/mapa/").status_code, 404)

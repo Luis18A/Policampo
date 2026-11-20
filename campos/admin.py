@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import CroquisManual, Establecimiento, Parcela, UbicacionGeografica
+from .models import CroquisManual, Establecimiento, Parcela
 
 
 class ParcelaEnLinea(admin.TabularInline):
@@ -19,4 +19,3 @@ class EstablecimientoAdmin(admin.ModelAdmin):
 
 
 admin.site.register(CroquisManual)
-admin.site.register(UbicacionGeografica)

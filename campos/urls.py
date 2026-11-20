@@ -28,7 +28,6 @@ urlpatterns = [
     # Integración con futuro módulo Proceso (API de estructura de datos unificada)
     path('establecimientos/<int:pk>/proceso/', views.proceso_datos_api, name='proceso_datos_api'),
 
-    # Módulo GIS: Ubicación territorial Jujuy
-    path('establecimientos/<int:pk>/mapa/', views.mapa_geografico, name='mapa_geografico'),
-    path('establecimientos/<int:pk>/mapa/guardar/', views.mapa_guardar, name='mapa_guardar'),
+    # [Unificación] El mapa geográfico de Sol se eliminó: la ubicación y el diseño
+    # sobre el mapa ahora los maneja la app mapa (parte de Agus).
 ]

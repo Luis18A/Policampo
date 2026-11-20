@@ -84,8 +84,9 @@
                     Localizá tu establecimiento en el mapa y delimitá geográficamente su superficie.
                 </p>
                 <div class="welcome-card-action">
+                    {# [Unificación] Lleva al mapa de Agus (app mapa); el mapa de Sol se eliminó #}
                     {% if ultimo_campo %}
-                    <a href="{% url 'campos:mapa_geografico' pk=ultimo_campo.pk %}" class="welcome-card-btn">
+                    <a href="{% url 'mapa:delimitar_terreno' pk=ultimo_campo.pk %}" class="welcome-card-btn">
                         Buscar mi establecimiento &rarr;
                     </a>
                     {% else %}
