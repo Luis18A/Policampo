@@ -402,7 +402,7 @@ class UnMetodoPorFincaTests(TestCase):
         self.urls = {
             MetodoCaracterizacion.CUESTIONARIO: 'campos:parcelas_cuestionario',
             MetodoCaracterizacion.CROQUIS_MANUAL: 'campos:croquis_manual',
-            MetodoCaracterizacion.MAPA: 'mapa:delimitar_terreno',
+            MetodoCaracterizacion.MAPA: 'mapa:registro_terreno',
         }
 
     def test_cada_finca_abre_solo_su_metodo_y_los_otros_redirigen(self):
@@ -420,7 +420,7 @@ class UnMetodoPorFincaTests(TestCase):
                                    json.dumps({'parcelas': [{'id': 'new_1', 'cultivo': 'Papa'}]}),
                                    content_type='application/json')
         self.assertEqual(croquis.status_code, 403)
-        mapa = self.client.post(reverse('mapa:guardar_diseno', kwargs={'pk': finca.pk}),
+        mapa = self.client.post(reverse('mapa:guardar_terreno', kwargs={'pk': finca.pk}),
                                 '{}', content_type='application/json')
         self.assertEqual(mapa.status_code, 403)
         self.assertFalse(finca.parcelas.exists())

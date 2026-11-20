@@ -215,7 +215,7 @@ class Establecimiento(models.Model):
     URL_POR_METODO = {
         MetodoCaracterizacion.CUESTIONARIO: 'campos:parcelas_cuestionario',
         MetodoCaracterizacion.CROQUIS_MANUAL: 'campos:croquis_manual',
-        MetodoCaracterizacion.MAPA: 'mapa:delimitar_terreno',
+        MetodoCaracterizacion.MAPA: 'mapa:registro_terreno',  # paso 1 del mapa de Agus
         MetodoCaracterizacion.AMBOS: 'campos:parcelas_cuestionario',
     }
 

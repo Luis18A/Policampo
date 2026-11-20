@@ -1,12 +1,12 @@
 """
-Vistas del mapa de diseño espacial (parte de Agus).
+Vistas del mapa (parte de Agus), en dos pasos:
+1. Entrada: registro del terreno (contorno y sectores dibujados sobre el mapa).
+2. Salida: propuesta de rediseño con franjas florales, a partir del terreno guardado.
 
-[Integración] Su versión original tenía una vista sin login ni establecimiento, y la de guardar
-no estaba conectada a ninguna URL. Ahora:
-- el mapa se abre para UN establecimiento del usuario que inició sesión;
-- al guardar, el diseño queda en la base (modelo DisenoEspacial);
-- se reutiliza _establecimiento_del_usuario de la app campos: si el establecimiento
-  es de otra persona, la respuesta es 404.
+[Integración] Todas las vistas:
+- piden sesión iniciada y usan _establecimiento_del_usuario (404 si la finca es de otra persona);
+- [Unificación] solo funcionan para fincas cargadas por el método "mapa"
+  (cada finca se edita únicamente con el método con el que se cargó).
 """
 
 import json
@@ -26,77 +26,121 @@ from campos.views import (
 
 from .models import DisenoEspacial
 
-# Tope de tamaño del JSON que aceptamos (2 MB): un diseño normal pesa unos pocos KB.
+# Tope de tamaño del JSON que aceptamos (2 MB)
 TAMANIO_MAXIMO_BYTES = 2 * 1024 * 1024
 
 
-def _centro_del_diseno(diseno):
-    """Lat/lng guardadas en el diseño (la arma mapa.js en datos["ubicacion"]), o None."""
-    ubicacion = (diseno.datos or {}).get('ubicacion') if diseno else None
-    try:
-        return {'lat': float(ubicacion['lat']), 'lng': float(ubicacion['lng']), 'zoom': 16}
-    except (TypeError, KeyError, ValueError):
+def _leer_json(request):
+    """Devuelve el JSON del cuerpo del pedido, o None si es demasiado grande o no es JSON válido."""
+    if len(request.body) > TAMANIO_MAXIMO_BYTES:
         return None
+    try:
+        data = json.loads(request.body)
+    except (ValueError, TypeError):
+        return None
+    return data if isinstance(data, dict) else None
 
 
+# ==========================================
+# 1. PÁGINA DE ENTRADA (Carga de Terreno)
+# ==========================================
 @login_required
-def vista_mapa(request, pk):
+def registro_terreno(request, pk):
+    """Muestra la interfaz para dibujar el contorno y los sectores."""
+    # Seguridad: Verifica que el usuario sea el dueño del establecimiento
     establecimiento = _establecimiento_del_usuario(request, pk)
-    # [Unificación] Solo las fincas cargadas por el mapa se editan acá
     otro_metodo = _redirigir_si_otro_metodo(request, establecimiento, MetodoCaracterizacion.MAPA)
     if otro_metodo:
         return otro_metodo
-    diseno = DisenoEspacial.objects.filter(establecimiento=establecimiento).first()
 
-    # [Unificación] El mapa de Sol se eliminó: el contorno y el centro iniciales
-    # salen solo del último diseño guardado (si no hay, el mapa arranca en Jujuy).
-    parcela_inicial = diseno.parcela_geojson if diseno else None
-    centro_inicial = _centro_del_diseno(diseno)
-
-    return render(request, 'mapa/delimitar_terreno.html', {
+    return render(request, 'mapa/registro_terreno.html', {
         'establecimiento': establecimiento,
-        'diseno': diseno,
-        # Se pasan al template con el filtro json_script (forma segura de darle datos a JavaScript)
-        'parcela_inicial': parcela_inicial,
-        'centro_inicial': centro_inicial,
     })
 
 
 @login_required
 @require_POST
-def guardar_diseno(request, pk):
+def guardar_terreno(request, pk):
+    """Endpoint (API) que recibe los datos de Turf.js (Página 1) y los guarda."""
     establecimiento = _establecimiento_del_usuario(request, pk)
     rechazo = _rechazo_json_si_otro_metodo(establecimiento, MetodoCaracterizacion.MAPA)
     if rechazo:
         return rechazo
 
-    if len(request.body) > TAMANIO_MAXIMO_BYTES:
-        return JsonResponse({'ok': False, 'mensaje': 'El diseño es demasiado grande.'}, status=400)
+    data = _leer_json(request)
+    if data is None:
+        return JsonResponse({'ok': False, 'mensaje': 'Los datos del terreno no son válidos.'}, status=400)
 
-    # Validamos lo mínimo que necesitamos antes de guardar
+    # Guardamos el JSON con valores por defecto (en cero) en los campos obligatorios:
+    # las métricas reales se calculan en el paso 2 (propuesta).
+    DisenoEspacial.objects.update_or_create(
+        establecimiento=establecimiento,
+        defaults={
+            'datos': data,
+            'area_total_ha': Decimal('0.0'),
+            'porcentaje_floral': Decimal('0.0'),
+            'tipo_diseno': 'Borrador (Paso 1)',
+            'cumple_minimo_20': False,
+        }
+    )
+    return JsonResponse({'ok': True, 'mensaje': 'Terreno guardado exitosamente'})
+
+
+# ==========================================
+# 2. PÁGINA DE SALIDA (Propuesta de Rediseño)
+# ==========================================
+@login_required
+def propuesta_redisenio(request, pk):
+    """Muestra la propuesta de rediseño leyendo el JSON guardado en el paso 1."""
+    establecimiento = _establecimiento_del_usuario(request, pk)
+    otro_metodo = _redirigir_si_otro_metodo(request, establecimiento, MetodoCaracterizacion.MAPA)
+    if otro_metodo:
+        return otro_metodo
+
+    diseno = DisenoEspacial.objects.filter(establecimiento=establecimiento).first()
+
+    return render(request, 'mapa/propuesta_redisenio.html', {
+        'establecimiento': establecimiento,
+        # [Integración] Se pasa el dict tal cual: la plantilla lo convierte con json_script
+        # (la forma segura de darle datos a JavaScript; antes se usaba json.dumps + |safe).
+        'terreno': diseno.datos if diseno else None,
+    })
+
+
+@login_required
+@require_POST
+def guardar_propuesta(request, pk):
+    """Endpoint (API) que guarda el rediseño final con franjas y métricas."""
+    establecimiento = _establecimiento_del_usuario(request, pk)
+    rechazo = _rechazo_json_si_otro_metodo(establecimiento, MetodoCaracterizacion.MAPA)
+    if rechazo:
+        return rechazo
+
+    data = _leer_json(request)
+    if data is None:
+        return JsonResponse({'ok': False, 'mensaje': 'Los datos de la propuesta no son válidos.'}, status=400)
+
     try:
-        data = json.loads(request.body)
-        metricas = data['metricas']
-        parcela = data['geometrias']['parcela']
-        area_total_ha = Decimal(str(metricas['area_total_ha']))
-        porcentaje_floral = Decimal(str(data['diseno']['porcentaje_real']))
-        if not isinstance(parcela, dict) or 'type' not in parcela:
-            raise ValueError('La parcela no es un GeoJSON válido.')
-    except (ValueError, KeyError, TypeError, InvalidOperation):
-        return JsonResponse({'ok': False, 'mensaje': 'Los datos del diseño no son válidos.'}, status=400)
+        metricas = data.get('metricas') or {}
+        diseno_data = data.get('diseno') or {}
+        diag_espacial = data.get('diagnostico_espacial') or {}
+        area_total_ha = Decimal(str(metricas.get('area_total_ha', 0)))
+        porcentaje_floral = Decimal(str(diseno_data.get('porcentaje_real', 0)))
+    except (AttributeError, InvalidOperation):
+        return JsonResponse({'ok': False, 'mensaje': 'Los datos de la propuesta no son válidos.'}, status=400)
 
     diseno, _ = DisenoEspacial.objects.update_or_create(
         establecimiento=establecimiento,
         defaults={
             'datos': data,
-            'tipo_diseno': str(data['diseno'].get('tipo') or '')[:30],
+            'tipo_diseno': str(diseno_data.get('tipo', ''))[:30],
             'area_total_ha': area_total_ha,
             'porcentaje_floral': porcentaje_floral,
-            'cumple_minimo_20': bool((data.get('diagnostico_espacial') or {}).get('cumple_minimo_20_pct')),
+            'cumple_minimo_20': bool(diag_espacial.get('cumple_minimo_20_pct')),
         },
     )
     return JsonResponse({
         'ok': True,
-        'mensaje': 'Diseño guardado',
+        'mensaje': 'Propuesta de rediseño guardada',
         'area_ha': float(diseno.area_total_ha),
     })

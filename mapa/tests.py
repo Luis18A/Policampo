@@ -1,4 +1,4 @@
-"""Tests del mapa de diseño espacial (parte de Agus, integrado)."""
+"""Tests del mapa (parte de Agus, integrado): paso 1 terreno (entrada) y paso 2 propuesta (salida)."""
 
 import json
 from decimal import Decimal
@@ -23,20 +23,19 @@ PARCELA = {
 }
 
 
-def payload(porcentaje=21.5, cumple=True):
-    """Un diseño con la misma forma que el que arma mapa.js al guardar."""
+def terreno():
+    """Lo que guarda el paso 1 (entrada_mapa.js): contorno y sectores, todavía sin métricas."""
+    return {"version": "1.0", "geometrias": {"parcela": PARCELA}}
+
+
+def propuesta(porcentaje=21.5, cumple=True):
+    """Lo que guarda el paso 2 (salida_mapa.js): el rediseño con franjas y métricas."""
     return {
         "version": "1.0",
-        "ubicacion": {"lat": -24.375, "lng": -65.095, "zona_seleccionada": "Perico"},
-        "cultivo_principal": {"codigo": "frutilla", "nombre": "Frutilla"},
         "diseno": {"tipo": "perimetral", "porcentaje_objetivo": 20, "porcentaje_real": porcentaje},
         "metricas": {"area_total_ha": 1.2345, "perimetro_m": 450},
         "diagnostico_espacial": {"estado": "ok", "cumple_minimo_20_pct": cumple, "mensaje": ""},
-        "geometrias": {
-            "parcela": PARCELA,
-            "sectores_cultivo": {"type": "FeatureCollection", "features": []},
-            "corredores_florales": {"type": "FeatureCollection", "features": []},
-        },
+        "geometrias": {"parcela": PARCELA},
     }
 
 
@@ -47,110 +46,127 @@ class MapaTests(TestCase):
         self.beto = Usuario.objects.create_user("beto", "beto@mail.com", CONTRASENA)
         self.finca = Establecimiento.objects.create(
             usuario=self.ana, nombre="Finca de Ana", localidad="Perico",
-            superficie_total_ha=Decimal("1.5"), cultivo_principal="Frutilla",
+            superficie_total_ha=Decimal("1.5"),
             metodo_caracterizacion=MetodoCaracterizacion.MAPA,  # [Unificación] cargada por el mapa
         )
-        self.url_mapa = reverse("mapa:delimitar_terreno", kwargs={"pk": self.finca.pk})
-        self.url_guardar = reverse("mapa:guardar_diseno", kwargs={"pk": self.finca.pk})
+        pk = {"pk": self.finca.pk}
+        self.url_terreno = reverse("mapa:registro_terreno", kwargs=pk)
+        self.url_guardar_terreno = reverse("mapa:guardar_terreno", kwargs=pk)
+        self.url_propuesta = reverse("mapa:propuesta_redisenio", kwargs=pk)
+        self.url_guardar_propuesta = reverse("mapa:guardar_propuesta", kwargs=pk)
 
-    def guardar(self, datos):
+    def post_json(self, url, datos):
         cuerpo = datos if isinstance(datos, str) else json.dumps(datos)
-        return self.client.post(self.url_guardar, cuerpo, content_type="application/json")
+        return self.client.post(url, cuerpo, content_type="application/json")
 
+    # ─── Acceso y privacidad ───
     def test_sin_sesion_redirige_al_login(self):
-        res = self.client.get(self.url_mapa)
-        self.assertRedirects(res, f"{reverse('usuarios:login')}?next={self.url_mapa}")
+        for url in (self.url_terreno, self.url_propuesta):
+            res = self.client.get(url)
+            self.assertRedirects(res, f"{reverse('usuarios:login')}?next={url}")
 
-    def test_el_duenio_ve_el_mapa_de_su_establecimiento(self):
+    def test_el_duenio_ve_las_dos_paginas(self):
         self.client.login(username="ana", password=CONTRASENA)
-        res = self.client.get(self.url_mapa)
+        res = self.client.get(self.url_terreno)
         self.assertEqual(res.status_code, 200)
-        self.assertContains(res, "Finca de Ana")
-        self.assertContains(res, f'window.POLICAMPO_API_GUARDAR_URL = "{self.url_guardar}"')
+        self.assertContains(res, f'window.POLICAMPO_API_GUARDAR_ENTRADA_URL = "{self.url_guardar_terreno}"')
+        self.assertContains(res, f'window.POLICAMPO_URL_PROPUESTA = "{self.url_propuesta}"')
+        res = self.client.get(self.url_propuesta)
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, f'window.POLICAMPO_API_GUARDAR_PROPUESTA_URL = "{self.url_guardar_propuesta}"')
 
     def test_otro_usuario_no_puede_ver_ni_guardar(self):
         self.client.login(username="beto", password=CONTRASENA)
-        self.assertEqual(self.client.get(self.url_mapa).status_code, 404)
-        self.assertEqual(self.guardar(payload()).status_code, 404)
+        for url in (self.url_terreno, self.url_propuesta):
+            self.assertEqual(self.client.get(url).status_code, 404)
+        self.assertEqual(self.post_json(self.url_guardar_terreno, terreno()).status_code, 404)
+        self.assertEqual(self.post_json(self.url_guardar_propuesta, propuesta()).status_code, 404)
         self.assertFalse(DisenoEspacial.objects.exists())
 
-    def test_guardar_y_reemplazar_el_diseno(self):
+    # ─── Paso 1 → paso 2 ───
+    def test_guardar_terreno_y_despues_la_propuesta(self):
         self.client.login(username="ana", password=CONTRASENA)
-        res = self.guardar(payload())
+        res = self.post_json(self.url_guardar_terreno, terreno())
         self.assertEqual(res.status_code, 200)
-        self.assertTrue(res.json()["ok"])
-
         diseno = DisenoEspacial.objects.get(establecimiento=self.finca)
+        self.assertEqual(diseno.tipo_diseno, "Borrador (Paso 1)")
+        self.assertFalse(diseno.cumple_minimo_20)
+
+        # La propuesta recibe el terreno guardado
+        res = self.client.get(self.url_propuesta)
+        self.assertEqual(res.context["terreno"], terreno())
+        self.assertContains(res, 'id="terreno-inicial"')
+
+        # Guardar la propuesta completa las métricas (y reemplaza: uno por finca)
+        res = self.post_json(self.url_guardar_propuesta, propuesta())
+        self.assertTrue(res.json()["ok"])
+        self.assertEqual(DisenoEspacial.objects.count(), 1)
+        diseno.refresh_from_db()
         self.assertEqual(diseno.area_total_ha, Decimal("1.2345"))
         self.assertEqual(diseno.porcentaje_floral, Decimal("21.50"))
         self.assertTrue(diseno.cumple_minimo_20)
         self.assertEqual(diseno.tipo_diseno, "perimetral")
 
-        # Guardar de nuevo reemplaza el anterior (uno por establecimiento)
-        self.guardar(payload(porcentaje=12, cumple=False))
-        self.assertEqual(DisenoEspacial.objects.count(), 1)
-        diseno.refresh_from_db()
-        self.assertFalse(diseno.cumple_minimo_20)
+    def test_propuesta_sin_terreno_no_rompe(self):
+        self.client.login(username="ana", password=CONTRASENA)
+        res = self.client.get(self.url_propuesta)
+        self.assertEqual(res.status_code, 200)
+        self.assertIsNone(res.context["terreno"])
+        self.assertNotContains(res, "POLICAMPO_TERRENO_INICIAL = JSON.parse")
 
     def test_datos_invalidos_devuelven_400(self):
         self.client.login(username="ana", password=CONTRASENA)
-        sin_parcela = payload()
-        del sin_parcela["geometrias"]["parcela"]
-        for malo in ("esto no es json", {"metricas": {}}, sin_parcela):
-            self.assertEqual(self.guardar(malo).status_code, 400)
+        for url in (self.url_guardar_terreno, self.url_guardar_propuesta):
+            for malo in ("esto no es json", "[1, 2]"):
+                self.assertEqual(self.post_json(url, malo).status_code, 400, url)
+        malo = propuesta()
+        malo["metricas"]["area_total_ha"] = "mucho"
+        self.assertEqual(self.post_json(self.url_guardar_propuesta, malo).status_code, 400)
         self.assertFalse(DisenoEspacial.objects.exists())
 
-    def test_sin_diseno_el_mapa_arranca_vacio(self):
+    def test_el_terreno_se_escapa_al_pasarlo_a_javascript(self):
+        # Un texto con </script> no puede cortar el <script> de la página (json_script lo escapa)
         self.client.login(username="ana", password=CONTRASENA)
-        res = self.client.get(self.url_mapa)
-        self.assertIsNone(res.context["parcela_inicial"])
-        self.assertIsNone(res.context["centro_inicial"])
+        datos = terreno()
+        datos["nota"] = "</script><script>alert(1)</script>"
+        self.post_json(self.url_guardar_terreno, datos)
+        res = self.client.get(self.url_propuesta)
+        self.assertNotContains(res, "<script>alert(1)")
 
-    def test_precarga_el_ultimo_diseno_guardado(self):
-        self.client.login(username="ana", password=CONTRASENA)
-        self.guardar(payload())
-        res = self.client.get(self.url_mapa)
-        self.assertEqual(res.context["parcela_inicial"], PARCELA)
-        self.assertEqual(res.context["centro_inicial"], {"lat": -24.375, "lng": -65.095, "zoom": 16})
-
+    # ─── Unificación con el resto del sistema ───
     def test_inicio_por_mapa_siempre_crea_una_finca_nueva(self):
         # [Unificación] Como las otras dos opciones, "Ubicar mi campo en el mapa" carga una finca nueva
         self.client.login(username="ana", password=CONTRASENA)
         res = self.client.get(reverse("campos:pantalla_entrada"))
         self.assertContains(res, reverse("campos:establecimiento_crear") + "?modo=mapa")
-        self.assertNotContains(res, self.url_mapa)
+        self.assertNotContains(res, self.url_terreno)
 
-    def test_la_ficha_no_tiene_la_seccion_de_herramientas(self):
-        # [Unificación] Se quitó "Herramientas y Representaciones de este Campo"
+    def test_la_ficha_tiene_el_boton_editar_en_el_mapa(self):
         self.client.login(username="ana", password=CONTRASENA)
         res = self.client.get(reverse("campos:establecimiento_detalle", kwargs={"pk": self.finca.pk}))
-        self.assertEqual(res.status_code, 200)
         self.assertNotContains(res, "Herramientas y Representaciones")
-        # Lo que queda es UN botón para editar con su método (esta finca es de mapa)
-        self.assertContains(res, self.url_mapa)
+        self.assertContains(res, self.url_terreno)
         self.assertContains(res, "Editar en el mapa")
 
     def test_la_tarjeta_de_la_lista_solo_lleva_a_la_ficha(self):
-        # [Unificación] Sin botones de cuestionario, croquis, diseñador ni mapa en la tarjeta
         self.client.login(username="ana", password=CONTRASENA)
         res = self.client.get(reverse("campos:establecimientos_lista"))
         self.assertContains(res, reverse("campos:establecimiento_detalle", kwargs={"pk": self.finca.pk}))
-        for nombre in ("parcelas_cuestionario", "croquis_automatico", "croquis_manual"):
-            self.assertNotContains(res, reverse(f"campos:{nombre}", kwargs={"pk": self.finca.pk}), msg_prefix=nombre)
-        self.assertNotContains(res, self.url_mapa)
+        self.assertNotContains(res, self.url_terreno)
 
-    def test_nuevo_predio_en_modo_mapa_termina_en_el_mapa_de_agus(self):
+    def test_nuevo_predio_en_modo_mapa_termina_en_el_registro_de_terreno(self):
         self.client.login(username="ana", password=CONTRASENA)
         url = reverse("campos:establecimiento_crear") + "?modo=mapa"
         res = self.client.post(url, {
             "nombre": "Finca Nueva", "direccion": "Ruta 9 km 1", "departamento": "Palpalá",
             "localidad": "Palpalá", "ecorregion": "Valles Templados", "superficie_total_ha": "2.5",
-            "cultivo_principal": "Maíz", "disponibilidad_agua": "Pozo / Bomba",
         })
         nueva = Establecimiento.objects.get(nombre="Finca Nueva")
-        self.assertRedirects(res, reverse("mapa:delimitar_terreno", kwargs={"pk": nueva.pk}))
+        self.assertRedirects(res, reverse("mapa:registro_terreno", kwargs={"pk": nueva.pk}))
         self.assertEqual(nueva.metodo_caracterizacion, MetodoCaracterizacion.MAPA)
 
-    def test_el_mapa_de_sol_ya_no_existe(self):
+    def test_el_mapa_de_sol_y_el_mapa_viejo_ya_no_existen(self):
         self.client.login(username="ana", password=CONTRASENA)
-        self.assertEqual(self.client.get(f"/campos/establecimientos/{self.finca.pk}/mapa/").status_code, 404)
+        for viejo in ("mapa", "disenar"):
+            res = self.client.get(f"/campos/establecimientos/{self.finca.pk}/{viejo}/")
+            self.assertEqual(res.status_code, 404, viejo)

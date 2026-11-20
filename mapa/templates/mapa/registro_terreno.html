@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% comment %}
+    [Integración] Página 1 de la arquitectura dividida: Registro de Establecimiento y Terreno.
+    Hereda de base.html e inyecta la nueva interfaz dentro de .modulo-mapa (o page-entrada).
+{% endcomment %}
+
+{% block titulo %}Carga de Terreno · PoliCampo{% endblock %}
+
+{% block estilos_extra %}
+    <!-- Leaflet y Leaflet-Geoman -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/@geoman-io/leaflet-geoman-free@2.14.2/dist/leaflet-geoman.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'mapa/css/mapa.css' %}?v=4" />
+    
+    <!-- FORZAMOS EL OCULTAMIENTO DIRECTAMENTE EN EL HTML PARA VENCER A LA CACHÉ -->
+    <style>
+        .oculto,
+        .page-entrada .oculto,
+        .page-salida .oculto {
+            display: none !important;
+        }
+    </style>
+{% endblock %}
+
+{# Pantalla de trabajo a pantalla completa: sin pie de página #}
+{% block pie %}{% endblock %}
+
+{% block contenido %}
+<div class="page-entrada">
+    
+    <!-- Token de seguridad oculto -->
+    {% csrf_token %}
+
+    <!-- Eliminamos el <header class="topbar"> por completo -->
+
+    <!-- Contenido principal (2 columnas) -->
+    <main class="app-layout">
+        <!-- Panel lateral izquierdo -->
+        <aside class="sidebar">
+
+            <!-- Sección 1: Datos del Establecimiento -->
+            <section class="panel-card">
+                <div class="panel-header">
+                    <span class="step-badge">1</span>
+                    <h2>Datos del Establecimiento</h2>
+                </div>
+
+                <div class="form-group">
+                    <label for="nombre-establecimiento">Nombre del establecimiento *</label>
+                    <input type="text" id="nombre-establecimiento" name="nombre_establecimiento" placeholder="Ej: Finca Los Lapachos" required />
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="departamento">Departamento *</label>
+                        <select id="departamento" name="departamento"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="localidad">Localidad *</label>
+                        <select id="localidad" name="localidad"></select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="direccion-establecimiento">Dirección / Referencia</label>
+                    <div class="input-row">
+                        <input type="text" id="direccion-establecimiento" name="direccion" placeholder="Ej: Ruta Prov. 47 km 4,5" />
+                        <button type="button" class="btn btn-secondary btn-sm" id="btn-buscar-direccion" title="Ubicar esta dirección en el mapa">
+                            🔍
+                        </button>
+                        <button type="button" class="btn btn-icon" id="btn-mi-ubicacion" title="Centrar en mi ubicación GPS">
+                            🎯
+                        </button>
+                    </div>
+                    <small class="help-text" id="estado-busqueda"></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="ecorregion">Ecorregión *</label>
+                    <select id="ecorregion" name="ecorregion"></select>
+                    <small class="help-text">Se sugiere automáticamente según el departamento, pero podés modificarla.</small>
+                </div>
+            </section>
+
+            <!-- Sección 2: Delimitación y Superficie -->
+            <section class="panel-card">
+                <div class="panel-header">
+                    <span class="step-badge">2</span>
+                    <h2>Contorno y Superficie</h2>
+                </div>
+
+                <div class="acciones-dibujo">
+                    <button type="button" class="btn btn-primary btn-block" id="btn-dibujar-parcela">
+                        ✏️ Delimitar Contorno del Terreno
+                    </button>
+                    <button type="button" class="btn btn-ghost btn-sm btn-block" id="btn-limpiar-todo" disabled>
+                        🗑️ Limpiar mapa y empezar de nuevo
+                    </button>
+                </div>
+
+                <div class="alerta-inline oculto" id="alerta-geometria" role="alert"></div>
+
+                <div class="superficie-editable-box">
+                    <div class="label-between">
+                        <label for="superficie-total-ha">Superficie total (ha) — Editable</label>
+                        <button type="button" class="btn-link oculto" id="btn-sincronizar-area" title="Volver al valor calculado por el mapa">
+                            ↺ Usar valor del mapa
+                        </button>
+                    </div>
+                    <div class="input-unit-group">
+                        <input type="number" id="superficie-total-ha" name="superficie_total_ha" min="0.01" step="0.01" placeholder="0.00" disabled />
+                        <span class="unit-tag">ha</span>
+                    </div>
+                    <div class="superficie-meta">
+                        <span id="meta-superficie-mapa">Dibujá el terreno para calcular el área</span>
+                        <span id="meta-perimetro">Perímetro: —</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección 3: Sectores de Cultivo -->
+            <section class="panel-card">
+                <div class="panel-header">
+                    <span class="step-badge">3</span>
+                    <h2>Sectores de Cultivo</h2>
+                </div>
+
+                <p class="help-text">Agregá uno o más sectores de cultivo dentro del terreno delimitado. Cada sector se recorta automáticamente al contorno.</p>
+
+                <div class="acciones-sectores">
+                    <button type="button" class="btn btn-secondary btn-sm btn-block" id="btn-agregar-sector" disabled>
+                        + Dibujar sector de cultivo en el mapa
+                    </button>
+                    <button type="button" class="btn btn-ghost btn-xs btn-block" id="btn-sector-completo" disabled>
+                        ⚡ Asignar 100% del terreno a un solo cultivo
+                    </button>
+                </div>
+
+                <ul class="lista-sectores" id="lista-sectores">
+                    <li class="lista-vacia">Todavía no agregaste sectores de cultivo.</li>
+                </ul>
+
+                <div class="resumen-cobertura oculto" id="resumen-cobertura">
+                    <span>Cobertura asignada: <strong id="cobertura-pct">0%</strong></span>
+                    <span id="cobertura-libre">Sin asignar: 0.00 ha</span>
+                </div>
+            </section>
+
+            <!-- Sección 4: Zonas Florales -->
+            <section class="panel-card panel-floral-existente">
+                <div class="panel-header">
+                    <span class="step-badge step-badge-floral">4</span>
+                    <h2>Zonas con Flores Existentes <span class="badge-opcional">Opcional</span></h2>
+                </div>
+
+                <p class="help-text">Si el establecimiento ya cuenta con bordes silvestres, flora espontánea o franjas florales, marcalas para sumarlas al diagnóstico.</p>
+
+                <button type="button" class="btn btn-floral-outline btn-sm btn-block" id="btn-agregar-zona-floral" disabled>
+                    🌼 + Dibujar zona floral existente
+                </button>
+
+                <ul class="lista-sectores" id="lista-zonas-florales">
+                    <li class="lista-vacia">Sin zonas florales existentes marcadas.</li>
+                </ul>
+
+                <div class="resumen-cobertura resumen-floral-existente oculto" id="resumen-floral-existente">
+                    <span>Aporte floral actual: <strong id="floral-existente-pct">0%</strong></span>
+                    <span id="floral-existente-ha">0.00 ha</span>
+                </div>
+            </section>
+
+            <!-- Acción final -->
+            <section class="panel-card panel-submit">
+                <button type="button" class="btn btn-success btn-block" id="btn-continuar-propuesta" disabled>
+                    Guardar y ver Propuesta de Rediseño →
+                </button>
+                <div class="btn-row">
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-guardar-borrador" disabled>
+                        💾 Solo guardar datos
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-ver-json" disabled>
+                        { } Ver JSON
+                    </button>
+                </div>
+            </section>
+
+            <!-- Inputs ocultos para envío estándar -->
+            <input type="hidden" id="django-parcela-geojson" name="parcela_geojson" value="">
+            <input type="hidden" id="django-sectores-geojson" name="sectores_geojson" value="">
+            <input type="hidden" id="django-zonas-florales-geojson" name="zonas_florales_existentes_geojson" value="">
+            <input type="hidden" id="django-entrada-json" name="datos_entrada_json" value="">
+
+        </aside>
+
+        <!-- Área del mapa interactivo -->
+        <section class="map-wrapper">
+            <div class="map-toast oculto" id="map-toast"></div>
+            <div id="mapa" role="application" aria-label="Mapa de delimitación de terreno y sectores de cultivo"></div>
+
+            <div class="map-legend">
+                <h4>Capas de Entrada</h4>
+                <label class="legend-item">
+                    <input type="checkbox" id="toggle-capa-parcela" checked>
+                    <span class="swatch swatch-parcela"></span>
+                    <span>Contorno del terreno</span>
+                </label>
+                <label class="legend-item">
+                    <input type="checkbox" id="toggle-capa-sectores" checked>
+                    <span class="swatch swatch-sectores"></span>
+                    <span>Sectores de cultivo</span>
+                </label>
+                <label class="legend-item">
+                    <input type="checkbox" id="toggle-capa-florales" checked>
+                    <span class="swatch swatch-floral-existente"></span>
+                    <span>Zonas florales existentes</span>
+                </label>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modales -->
+    <div class="modal-backdrop oculto" id="modal-sector" role="dialog" aria-modal="true" aria-labelledby="modal-sector-titulo">
+        <div class="modal-card modal-sm">
+            <div class="modal-header">
+                <h3 id="modal-sector-titulo">Datos del sector de cultivo</h3>
+                <button type="button" class="btn-close" id="btn-cancelar-sector" aria-label="Cerrar">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="sector-nombre">Nombre del sector</label>
+                    <input type="text" id="sector-nombre" placeholder="Ej: Lote Norte" />
+                </div>
+                <div class="form-group">
+                    <label for="sector-cultivo">Cultivo</label>
+                    <select id="sector-cultivo"></select>
+                </div>
+                <div class="form-group oculto" id="grupo-cultivo-otro">
+                    <label for="sector-cultivo-otro">Especificá el cultivo</label>
+                    <input type="text" id="sector-cultivo-otro" placeholder="Ej: Frambuesa, Zapallito..." />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost btn-sm" id="btn-cancelar-sector-2">Cancelar</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btn-confirmar-sector">Agregar sector</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop oculto" id="modal-zona-floral" role="dialog" aria-modal="true" aria-labelledby="modal-floral-titulo">
+        <div class="modal-card modal-sm">
+            <div class="modal-header">
+                <h3 id="modal-floral-titulo">🌼 Zona con flores existente</h3>
+                <button type="button" class="btn-close" id="btn-cancelar-floral" aria-label="Cerrar">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="floral-nombre">Nombre / Ubicación</label>
+                    <input type="text" id="floral-nombre" placeholder="Ej: Borde Oeste con hinojo" />
+                </div>
+                <div class="form-group">
+                    <label for="floral-tipo">Tipo de cobertura floral</label>
+                    <select id="floral-tipo"></select>
+                </div>
+                <div class="form-group">
+                    <label for="floral-especies">Especies observadas (opcional)</label>
+                    <input type="text" id="floral-especies" placeholder="Ej: Hinojo, vicia, caléndula, chilca..." />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost btn-sm" id="btn-cancelar-floral-2">Cancelar</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btn-confirmar-floral">Agregar zona floral</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop oculto" id="modal-json" role="dialog" aria-modal="true" aria-labelledby="modal-json-titulo">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-json-titulo">Datos de Entrada (Listos para Django)</h3>
+                <button type="button" class="btn-close" id="btn-cerrar-modal" aria-label="Cerrar">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="help-text">Objeto JSON con los datos del establecimiento, superficie, contorno y sectores de cultivo.</p>
+                <pre id="preview-json-code"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-copiar-json">📋 Copiar JSON</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btn-cerrar-modal-2">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts_extra %}
+    <!-- 1. Definición de variables globales usando rutas Django -->
+    <script>
+        window.POLICAMPO_API_GUARDAR_ENTRADA_URL = "{% url 'mapa:guardar_terreno' pk=establecimiento.pk %}";
+        window.POLICAMPO_URL_PROPUESTA = "{% url 'mapa:propuesta_redisenio' pk=establecimiento.pk %}";
+    </script>
+
+    <!-- 2. Librerías JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/@geoman-io/leaflet-geoman-free@2.14.2/dist/leaflet-geoman.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+    <!-- 3. Scripts del módulo -->
+    <script src="{% static 'mapa/js/policampo_common.js' %}?v=2"></script>
+    <script src="{% static 'mapa/js/entrada_mapa.js' %}?v=2"></script>
+{% endblock %}
