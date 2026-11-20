@@ -112,6 +112,10 @@
             <a href="{% url 'campos:establecimiento_detalle' pk=ultimo_campo.pk %}" class="btn btn-secondary btn-sm">
                 Ver ficha de {{ ultimo_campo.nombre }}
             </a>
+            {# [Integración] Acceso directo al diseño en el mapa (app mapa, parte de Agus) #}
+            <a href="{% url 'mapa:delimitar_terreno' pk=ultimo_campo.pk %}" class="btn btn-secondary btn-sm">
+                🌼 Diseñar en el mapa
+            </a>
             <a href="{% url 'campos:establecimientos_lista' %}" class="btn btn-primary btn-sm">
                 Ver todos mis campos &rarr;
             </a>

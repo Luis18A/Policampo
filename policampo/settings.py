@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "principal",
     "suscripciones",   # por ahora solo pantallas visuales de plan y pago (no cobra nada)
     "campos",          # carga de establecimientos: cuestionario, croquis y mapa (parte de Sol)
+    "mapa",            # diseño espacial en el mapa: sectores y corredores florales (parte de Agus)
 ]
 
 MIDDLEWARE = [
