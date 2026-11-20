@@ -1,0 +1,8 @@
+{# Indicador de pasos: Cuenta -> Plan -> Pago. Recibe "paso_actual" (2 o 3) con {% include ... with paso_actual=N %}. #}
+<ol class="pasos-registro" aria-label="Pasos del registro">
+    <li class="hecho"><span>✓</span> Cuenta</li>
+    <li class="{% if paso_actual == 2 %}actual{% else %}hecho{% endif %}"{% if paso_actual == 2 %} aria-current="step"{% endif %}>
+        <span>{% if paso_actual > 2 %}✓{% else %}2{% endif %}</span> Plan
+    </li>
+    <li class="{% if paso_actual == 3 %}actual{% endif %}"{% if paso_actual == 3 %} aria-current="step"{% endif %}><span>3</span> Pago</li>
+</ol>

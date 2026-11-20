@@ -1,0 +1,24 @@
+# Entorno virtual
+venv/
+
+# Secretos
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Django
+db.sqlite3
+/staticfiles/
+/media/
+
+# Editores / SO
+.vscode/
+.idea/
+Thumbs.db
+
+# Configuración local de herramientas (Claude Code)
+.claude/
+docs/
+CLAUDE.md

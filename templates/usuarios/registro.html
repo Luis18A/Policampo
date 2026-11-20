@@ -1,0 +1,25 @@
+{% extends "usuarios/base_acceso.html" %}
+
+{% block titulo %}Registrarse · PoliCampo{% endblock %}
+
+{% block mensaje_titulo %}Empezá a rediseñar tu finca{% endblock %}
+
+{% block formulario %}
+<h1>Crear cuenta</h1>
+<p class="subtitulo">Registrate para cargar tus fincas y recibir recomendaciones agroecológicas.</p>
+
+<form method="post" novalidate>
+    {% csrf_token %}
+    {% for error in form.non_field_errors %}<p class="error" role="alert">{{ error }}</p>{% endfor %}
+    {% for campo in form %}
+        {% include "usuarios/_campo.html" %}
+    {% endfor %}
+    <button type="submit" class="boton boton-ancho">Registrarme</button>
+</form>
+
+<p class="aviso-datos">
+    Tus datos personales se usan solo para el funcionamiento de PoliCampo
+    y se tratan según la Ley N.º 25.326 de Protección de los Datos Personales.
+</p>
+<p class="alternativa">¿Ya tenés cuenta? <a href="{% url 'usuarios:login' %}">Iniciá sesión</a></p>
+{% endblock %}

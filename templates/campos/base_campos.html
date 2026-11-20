@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load static %}
+{% comment %}
+    [Integración] Puente entre las plantillas de Sol y nuestro base.html.
+
+    Las plantillas de la app campos se escribieron con otros nombres de bloques
+    (title, extra_css, content, extra_js). En vez de reescribirlas todas, esta plantilla
+    "traduce" cada bloque de Sol al bloque equivalente nuestro. Así, en sus plantillas
+    solo cambió la línea {% extends %}, y siguen siendo fáciles de comparar con su versión.
+
+    Además envuelve el contenido en .modulo-campos: policampo.css limita sus reglas
+    generales a ese contenedor para no cambiar el resto del sitio.
+{% endcomment %}
+
+{% block titulo %}{% block title %}PoliCampo{% endblock %}{% endblock %}
+
+{% block estilos_extra %}
+    <link rel="stylesheet" href="{% static 'css/policampo.css' %}">
+    {% block extra_css %}{% endblock %}
+{% endblock %}
+
+{% block contenido %}
+    <div class="main-content modulo-campos">
+        {% block content %}{% endblock %}
+    </div>
+{% endblock %}
+
+{% block scripts_extra %}{% block extra_js %}{% endblock %}{% endblock %}

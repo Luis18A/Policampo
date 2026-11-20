@@ -1,0 +1,129 @@
+{% extends 'campos/base_campos.html' %}
+{% load static %}
+
+{% block title %}{{ establecimiento.nombre }} | PoliCampo{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 0 auto;">
+    <!-- Encabezado del Predio -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                <a href="{% url 'campos:establecimientos_lista' %}" style="text-decoration: none; color: #6b7280; font-size: 0.9rem;">
+                    &larr; Mis Establecimientos
+                </a>
+                <span class="brand-badge">{{ establecimiento.localidad }}, {{ establecimiento.departamento }}</span>
+                <span class="brand-badge" style="background-color: #fef3c7; color: #92400e;">{{ establecimiento.ecorregion }}</span>
+            </div>
+            <h1 style="color: var(--color-primary-dark); font-size: 2.2rem;">{{ establecimiento.nombre }}</h1>
+            <p style="color: #4b5563; font-size: 1.05rem;">
+                Cultivo principal: <strong>{{ establecimiento.cultivo_principal }}</strong> &bull; 
+                Agua: <strong>{{ establecimiento.disponibilidad_agua }}</strong>
+            </p>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem;">
+            <a href="{% url 'campos:establecimiento_editar' pk=establecimiento.pk %}" class="btn btn-secondary btn-sm">
+                ✏️ Editar Datos Generales
+            </a>
+        </div>
+    </div>
+
+    <!-- Tiras de Métricas -->
+    <div class="metrics-strip">
+        <div class="metric-box">
+            <span class="metric-title">Superficie Total Predio</span>
+            <span class="metric-val">{{ superficie_total|floatformat:4 }} <small style="font-size: 1rem;">ha</small></span>
+            <span class="metric-sub">{{ establecimiento.superficie_total_m2|floatformat:0 }} m²</span>
+        </div>
+
+        <div class="metric-box">
+            <span class="metric-title">Superficie Distribuida</span>
+            <span class="metric-val" style="color: #2b8a3e;">{{ superficie_distribuida|floatformat:4 }} <small style="font-size: 1rem;">ha</small></span>
+            <span class="metric-sub">{{ establecimiento.superficie_distribuida_m2|floatformat:0 }} m² en {{ parcelas.count }} parcela{{ parcelas.count|pluralize:"s" }}</span>
+        </div>
+
+        <div class="metric-box">
+            <span class="metric-title">Superficie Restante</span>
+            <span class="metric-val" style="color: #2d6a4f;">{{ superficie_restante|floatformat:4 }} <small style="font-size: 1rem;">ha</small></span>
+            <span class="metric-sub">{{ establecimiento.superficie_restante_m2|floatformat:0 }} m² disponible</span>
+        </div>
+
+        <div class="metric-box">
+            <span class="metric-title">Ocupación</span>
+            <span class="metric-val">{{ porcentaje_utilizado }}%</span>
+            <span class="metric-sub">del terreno</span>
+        </div>
+    </div>
+
+    <!-- Cuadrícula de 4 Módulos de Trabajo -->
+    <h2 style="font-size: 1.35rem; color: var(--color-primary-dark); margin: 2rem 0 1rem;">
+        Herramientas y Representaciones de este Campo
+    </h2>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+        <!-- Módulo 1: Cuestionario de Parcelas -->
+        <div class="card" style="border-top: 4px solid var(--color-primary); display: flex; flex-direction: column;">
+            <span style="font-size: 2.2rem; margin-bottom: 0.5rem;">📝</span>
+            <h3 style="color: var(--color-primary-dark); font-size: 1.15rem; margin-bottom: 0.5rem;">
+                Cuestionario de Superficies
+            </h3>
+            <p style="font-size: 0.9rem; color: #4b5563; margin-bottom: 1.25rem; flex: 1;">
+                Registrá tus parcelas, tipos de uso, cultivos y ubicaciones relativas en el predio.
+            </p>
+            <a href="{% url 'campos:parcelas_cuestionario' pk=establecimiento.pk %}" class="btn btn-primary" style="width: 100%;">
+                Abrir Cuestionario &rarr;
+            </a>
+        </div>
+
+        <!-- Módulo 2: Croquis Automático -->
+        <div class="card" style="border-top: 4px solid #2b8a3e; display: flex; flex-direction: column;">
+            <span style="font-size: 2.2rem; margin-bottom: 0.5rem;">🌱</span>
+            <h3 style="color: var(--color-primary-dark); font-size: 1.15rem; margin-bottom: 0.5rem;">
+                Croquis Automático
+            </h3>
+            <p style="font-size: 0.9rem; color: #4b5563; margin-bottom: 1.25rem; flex: 1;">
+                Visualizá el croquis esquemático no editable generado a partir de las respuestas del cuestionario.
+            </p>
+            <a href="{% url 'campos:croquis_automatico' pk=establecimiento.pk %}" class="btn btn-secondary" style="width: 100%; border-color: #2b8a3e; color: #2b8a3e;">
+                Ver Croquis SVG &rarr;
+            </a>
+        </div>
+
+        <!-- Módulo 3: Croquis Manual Métrico -->
+        <div class="card" style="border-top: 4px solid #f97316; display: flex; flex-direction: column;">
+            <span style="font-size: 2.2rem; margin-bottom: 0.5rem;">📐</span>
+            <h3 style="color: var(--color-primary-dark); font-size: 1.15rem; margin-bottom: 0.5rem;">
+                Croquis Manual con Medidas
+            </h3>
+            <p style="font-size: 0.9rem; color: #4b5563; margin-bottom: 1.25rem; flex: 1;">
+                Dibujá personalmente tu campo en una cuadrícula métrica en metros reales y figuras geométricas.
+            </p>
+            <a href="{% url 'campos:croquis_manual' pk=establecimiento.pk %}" class="btn btn-secondary" style="width: 100%; border-color: #f97316; color: #9a3412;">
+                Abrir Diseñador &rarr;
+            </a>
+        </div>
+
+        <!-- [Unificación] Módulo 4: Diseño en el mapa (app mapa, parte de Agus). Reemplaza al mapa satelital de Sol -->
+
+        <div class="card" style="border-top: 4px solid #d63384; display: flex; flex-direction: column;">
+            <span style="font-size: 2.2rem; margin-bottom: 0.5rem;">🌼</span>
+            <h3 style="color: var(--color-primary-dark); font-size: 1.15rem; margin-bottom: 0.5rem;">
+                Diseño de corredores florales
+            </h3>
+            <p style="font-size: 0.9rem; color: #4b5563; margin-bottom: 1.25rem; flex: 1;">
+                Ubicá tu campo en el mapa satelital, delimitá el terreno, distribuí los cultivos y diseñá las franjas florales.
+                {% with diseno=establecimiento.diseno_espacial %}
+                    {% if diseno %}
+                        <br><strong>Último diseño:</strong> {{ diseno.porcentaje_floral }} % de corredores
+                        {% if diseno.cumple_minimo_20 %}(cumple el 20 %){% else %}(no llega al 20 %){% endif %}.
+                    {% endif %}
+                {% endwith %}
+            </p>
+            <a href="{% url 'mapa:delimitar_terreno' pk=establecimiento.pk %}" class="btn btn-secondary" style="width: 100%; border-color: #d63384; color: #a61e4d;">
+                Diseñar en el mapa &rarr;
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

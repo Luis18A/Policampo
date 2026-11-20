@@ -1,0 +1,422 @@
+/**
+ * POLICAMPO - Editor de Croquis Manual con Lápiz Directo
+ * Estilos para el editor de dibujo libre de terrenos y cultivos.
+ */
+
+/* ─── Layout principal del editor ─────────────────────────────── */
+.editor-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* ─── Área de trabajo: canvas + sidebar ───────────────────────── */
+.editor-workspace {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 1rem;
+    align-items: start;
+}
+
+@media (max-width: 1024px) {
+    .editor-workspace {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ─── Wrapper del canvas ──────────────────────────────────────── */
+.canvas-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
+
+.canvas-header {
+    background: #f8fafc;
+    border-bottom: 1.5px solid #e2e8f0;
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+    color: #475569;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-height: 40px;
+}
+
+/* ─── Viewport del canvas ─────────────────────────────────────── */
+.canvas-viewport {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    background: #f8fafc;
+    border-radius: 0 0 8px 8px;
+    min-height: 400px;
+}
+
+.canvas-viewport canvas {
+    display: block;
+    width: 100%;
+    cursor: crosshair;
+}
+
+/* ─── Barra lateral del editor ────────────────────────────────── */
+.editor-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.sidebar-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #1b4332;
+    margin-bottom: 0.65rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+/* ─── Métricas en tiempo real ─────────────────────────────────── */
+.metrics-strip {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.metric-box {
+    flex: 1;
+    min-width: 130px;
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.65rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.metric-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.metric-val {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #1b4332;
+    line-height: 1.1;
+}
+
+.metric-sub {
+    font-size: 0.72rem;
+    color: #94a3b8;
+}
+
+/* ─── Barra rápida de herramientas ────────────────────────────── */
+.editor-quick-bar {
+    background-color: #ffffff;
+    border: 2px solid #2d6a4f;
+    border-radius: 10px;
+    padding: 0.85rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    box-shadow: 0 4px 15px rgba(45,106,79,0.08);
+}
+
+/* ─── Botones de herramienta ──────────────────────────────────── */
+.tool-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.85rem;
+    background: #f1f5f9;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.tool-btn:hover {
+    background: #e2e8f0;
+    border-color: #94a3b8;
+}
+
+.tool-btn.active {
+    background: #2d6a4f;
+    border-color: #1b4332;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(27,67,50,0.25);
+}
+
+/* ─── Input de cultivo ────────────────────────────────────────── */
+.crop-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.crop-input-field {
+    padding: 0.4rem 0.75rem;
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    color: #1e293b;
+    width: 160px;
+    transition: border-color 0.15s;
+    outline: none;
+}
+
+.crop-input-field:focus {
+    border-color: #2d6a4f;
+    box-shadow: 0 0 0 3px rgba(45,106,79,0.12);
+}
+
+/* ─── Chips de cultivos rápidos ───────────────────────────────── */
+.crop-chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.crop-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 2px solid transparent;
+    background: #f1f5f9;
+    color: #334155;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.crop-chip:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+}
+
+.crop-chip.selected {
+    border-color: currentColor;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    transform: translateY(-1px);
+}
+
+/* ─── Selector de color ───────────────────────────────────────── */
+.color-picker-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+}
+
+.color-option-btn {
+    border-radius: 50%;
+    border: 2.5px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+    outline: none;
+}
+
+.color-option-btn:hover {
+    transform: scale(1.15);
+    border-color: #1b4332;
+}
+
+.color-option-btn.selected {
+    border-color: #1b4332;
+    box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #1b4332;
+    transform: scale(1.1);
+}
+
+/* ─── Formulario del panel lateral ───────────────────────────── */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.form-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #374151;
+}
+
+.form-input,
+.form-select {
+    padding: 0.45rem 0.75rem;
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    color: #1e293b;
+    background: #fff;
+    width: 100%;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.form-input:focus,
+.form-select:focus {
+    border-color: #2d6a4f;
+    box-shadow: 0 0 0 3px rgba(45,106,79,0.12);
+}
+
+.form-help {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+/* ─── Botones de acción ───────────────────────────────────────── */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btn-primary {
+    background: #2d6a4f;
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background: #1b4332;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(27,67,50,0.25);
+}
+
+.btn-secondary {
+    background: #f1f5f9;
+    color: #374151;
+    border: 1.5px solid #cbd5e1;
+}
+
+.btn-secondary:hover {
+    background: #e2e8f0;
+}
+
+.btn-danger {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #fca5a5;
+}
+
+.btn-danger:hover {
+    background: #fecaca;
+    color: #7f1d1d;
+}
+
+.btn-sm {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.82rem;
+}
+
+/* ─── Badge de marca ──────────────────────────────────────────── */
+.brand-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.65rem;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+/* ─── Badge de guía del lápiz ─────────────────────────────────── */
+.pencil-guide-badge {
+    background-color: #f0fdf4;
+    border: 1.5px solid #86efac;
+    border-radius: 8px;
+    padding: 0.65rem 1rem;
+    font-size: 0.88rem;
+    color: #166534;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ─── Cards ───────────────────────────────────────────────────── */
+.card {
+    background: #ffffff;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    padding: 1.25rem;
+}
+
+/* ─── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .editor-container {
+        padding: 0.75rem;
+    }
+
+    .editor-quick-bar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .metrics-strip {
+        gap: 0.5rem;
+    }
+
+    .metric-box {
+        min-width: 100px;
+    }
+}
+
+/* ─── Print ───────────────────────────────────────────────────── */
+@media print {
+    .editor-quick-bar,
+    .pencil-guide-badge,
+    .metrics-strip,
+    .editor-sidebar,
+    .canvas-header,
+    #btn-guardar-manual,
+    #btn-imprimir-manual,
+    #btn-exportar-png {
+        display: none !important;
+    }
+
+    .editor-workspace {
+        grid-template-columns: 1fr;
+    }
+
+    .canvas-wrapper {
+        border: none;
+        box-shadow: none;
+    }
+}

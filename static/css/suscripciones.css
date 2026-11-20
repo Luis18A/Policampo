@@ -1,0 +1,115 @@
+/* =============================================================================
+   Pantallas de plan y pago (app suscripciones). Usa las variables de estilos.css.
+   ========================================================================== */
+
+.suscripcion { padding: 2rem 0 4rem; }
+.suscripcion-encabezado { text-align: center; max-width: 38rem; margin: 0 auto 2rem; }
+.suscripcion-encabezado h1 { font-size: clamp(1.8rem, 4.5vw, 2.6rem); margin-bottom: 0.5rem; }
+.suscripcion-encabezado p { color: var(--gris); margin: 0; }
+.suscripcion-saltear { display: block; text-align: center; margin-top: 1rem; font-weight: 600; }
+
+/* --- Indicador de pasos: (✓) Cuenta — (2) Plan — (3) Pago -------------------- */
+.pasos-registro {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem 1.5rem;
+    flex-wrap: wrap;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2rem;
+    font-weight: 600;
+    color: var(--gris);
+}
+.pasos-registro li { display: flex; align-items: center; gap: 0.5rem; }
+.pasos-registro span {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    font-size: 0.85rem;
+    border: 2px solid var(--borde);
+    background: var(--blanco);
+}
+.pasos-registro .hecho { color: var(--verde-700); }
+.pasos-registro .hecho span { background: var(--verde-700); border-color: var(--verde-700); color: var(--blanco); }
+.pasos-registro .actual { color: var(--verde-900); }
+.pasos-registro .actual span { border-color: var(--calendula); color: var(--calendula-oscuro); }
+
+/* --- Tarjeta del plan ---------------------------------------------------------- */
+.plan-tarjeta {
+    max-width: 30rem;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    background: var(--blanco);
+    border: 2px solid var(--calendula);
+    border-radius: var(--radio-grande);
+    box-shadow: var(--sombra);
+}
+.plan-cabecera { text-align: center; padding-bottom: 1.25rem; border-bottom: 1px solid var(--salvia-200); }
+.plan-cabecera h2 { font-size: 1.3rem; margin-bottom: 0.25rem; }
+.plan-precio { margin: 0; font-size: 3rem; font-weight: 800; color: var(--verde-900); line-height: 1.1; }
+.plan-moneda { font-size: 1.6rem; vertical-align: 0.9rem; margin-right: 0.1rem; }
+.plan-periodo { display: block; font-size: 0.95rem; font-weight: 500; color: var(--gris); }
+.plan-incluye { list-style: none; padding: 0; margin: 1.5rem 0; display: grid; gap: 0.75rem; }
+.plan-incluye li { display: flex; gap: 0.6rem; align-items: flex-start; }
+.plan-incluye svg { flex-shrink: 0; color: var(--verde-500); margin-top: 0.15rem; }
+
+/* --- Pantalla de pago ---------------------------------------------------------- */
+.pago-grilla { display: grid; gap: 1.5rem; max-width: 60rem; margin: 0 auto; }
+.pago-medios, .pago-resumen {
+    padding: 1.5rem;
+    background: var(--blanco);
+    border: 1px solid var(--salvia-200);
+    border-radius: var(--radio);
+}
+.pago-medios h2, .pago-resumen h2 { font-size: 1.15rem; margin: 0 0 1rem; }
+
+.aviso-proximamente {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: var(--radio-chico);
+    background: #fff4e6;
+    border: 1px solid #f6cf9c;
+    color: var(--calendula-oscuro);
+}
+.aviso-proximamente svg { flex-shrink: 0; margin-top: 0.1rem; }
+.aviso-proximamente strong { color: #8a4a08; }
+.aviso-proximamente p { margin: 0.2rem 0 0; color: var(--texto); font-size: 0.92rem; }
+
+.medios-lista { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.75rem; }
+.medio {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-chico);
+    opacity: 0.6;              /* se ve "apagado": todavía no se puede elegir */
+}
+.medio strong { display: block; }
+.medio span { color: var(--gris); font-size: 0.9rem; }
+.medio-icono {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--salvia-100);
+    color: var(--verde-700);
+}
+.medio-icono svg { width: 24px; height: 24px; }
+
+.pago-resumen dl { margin: 0 0 1rem; }
+.pago-resumen dl div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.5rem 0; }
+.pago-resumen dt { color: var(--gris); }
+.pago-resumen dd { margin: 0; font-weight: 600; text-align: right; }
+.pago-total { border-top: 1px solid var(--salvia-200); margin-top: 0.5rem; padding-top: 0.9rem !important; }
+.pago-total dd { font-size: 1.4rem; font-weight: 800; color: var(--verde-900); }
+.pago-total small { display: block; font-size: 0.8rem; font-weight: 500; color: var(--gris); }
+
+/* Botón deshabilitado: gris y sin efecto al pasar el mouse */
+.boton:disabled { background: #b9c2bb; border-color: #b9c2bb; color: var(--blanco); cursor: not-allowed; transform: none; }
+
+@media (min-width: 900px) {
+    .suscripcion { padding-top: 3rem; }
+    .pago-grilla { grid-template-columns: 1.4fr 1fr; align-items: start; }
+}

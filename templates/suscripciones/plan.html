@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Tu plan · PoliCampo{% endblock %}
+{% block estilos_extra %}<link rel="stylesheet" href="{% static 'css/suscripciones.css' %}">{% endblock %}
+
+{% block contenido %}
+<section class="suscripcion">
+    <div class="contenedor">
+        {% include "suscripciones/_pasos.html" with paso_actual=2 %}
+
+        <div class="suscripcion-encabezado">
+            <span class="etiqueta">Tu plan</span>
+            <h1>Activá PoliCampo en tu finca</h1>
+            <p>Con el plan Pro accedés a todas las herramientas para diagnosticar y rediseñar tu terreno.</p>
+        </div>
+
+        <article class="plan-tarjeta">
+            <div class="plan-cabecera">
+                <h2>{{ plan.nombre }}</h2>
+                <p class="plan-precio">
+                    <span class="plan-moneda">$</span>{{ plan.precio }}
+                    <span class="plan-periodo">{{ plan.moneda }} / {{ plan.periodo }}</span>
+                </p>
+            </div>
+
+            <ul class="plan-incluye">
+                {% for item in plan.incluye %}
+                    <li>
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+                        {{ item }}
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <a href="{% url 'suscripciones:pago' %}" class="boton boton-acento boton-ancho">Continuar al pago</a>
+            <a href="{% url 'campos:pantalla_entrada' %}" class="suscripcion-saltear">Continuar sin pagar por ahora</a>
+        </article>
+    </div>
+</section>
+{% endblock %}

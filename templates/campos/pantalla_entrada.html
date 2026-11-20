@@ -1,0 +1,127 @@
+{% extends 'campos/base_campos.html' %}
+{% load static %}
+
+{% block title %}PoliCampo | Comencemos a conocer tu campo 🌱{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pantalla_entrada.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="welcome-section">
+    <!-- Encabezado de Bienvenida Principal -->
+    <div class="welcome-header">
+        <h1 class="welcome-title">
+            Comencemos a conocer tu campo 🌱
+        </h1>
+        <p class="welcome-desc">
+            Para elaborar una propuesta de rediseño agroecológico, primero necesitamos conocer cómo está organizado tu establecimiento agrícola.<br>
+            Elegí la forma que te resulte más cómoda para ingresar la información de tu terreno.
+        </p>
+    </div>
+
+    <!-- Tres Tarjetas Grandes de Elección -->
+    <div class="cards-grid">
+        <!-- Opción 1: Registrar por superficies -->
+        <article class="welcome-card">
+            <div class="welcome-card-img-wrapper">
+                <img src="{% static 'img/card_superficies.jpg' %}" 
+                     alt="Campo agrícola al atardecer" 
+                     class="welcome-card-img">
+            </div>
+            <div class="welcome-card-body">
+                <h2 class="welcome-card-title">
+                    <span style="color: #6366f1;">✏️</span>
+                    <span>Registrar por superficies</span>
+                </h2>
+                <p class="welcome-card-text">
+                    Indicá la superficie total y luego distribuí las hectáreas entre cultivos y otros usos. El largo y el ancho son opcionales.
+                </p>
+                <div class="welcome-card-action">
+                    <a href="{% url 'campos:establecimiento_crear' %}?modo=superficies" class="welcome-card-btn">
+                        Registrar superficies &rarr;
+                    </a>
+                </div>
+            </div>
+        </article>
+
+        <!-- Opción 2: Dibujar mi terreno -->
+        <article class="welcome-card">
+            <div class="welcome-card-img-wrapper">
+                <img src="{% static 'img/card_disenador.jpg' %}" 
+                     alt="Productores en terreno agrícola" 
+                     class="welcome-card-img">
+            </div>
+            <div class="welcome-card-body">
+                <h2 class="welcome-card-title">
+                    <span style="color: #f97316;">✏️</span>
+                    <span>Dibujar mi terreno</span>
+                </h2>
+                <p class="welcome-card-text">
+                    Representá tu establecimiento mediante un croquis. Delimitá parcelas y ubicá cultivos, caminos y otros sectores.
+                </p>
+                <div class="welcome-card-action">
+                    <a href="{% url 'campos:establecimiento_crear' %}?modo=disenador" class="welcome-card-btn">
+                        Abrir diseñador &rarr;
+                    </a>
+                </div>
+            </div>
+        </article>
+
+        <!-- Opción 3: Ubicar mi campo en el mapa -->
+        <article class="welcome-card">
+            <div class="welcome-card-img-wrapper">
+                <img src="{% static 'img/card_mapa.jpg' %}" 
+                     alt="Paisaje de valles y cerros de Jujuy" 
+                     class="welcome-card-img">
+            </div>
+            <div class="welcome-card-body">
+                <h2 class="welcome-card-title">
+                    <span style="color: #0284c7;">🗺️</span>
+                    <span>Ubicar mi campo en el mapa</span>
+                </h2>
+                <p class="welcome-card-text">
+                    Localizá tu establecimiento en el mapa y delimitá geográficamente su superficie.
+                </p>
+                <div class="welcome-card-action">
+                    {# [Unificación] Lleva al mapa de Agus (app mapa); el mapa de Sol se eliminó #}
+                    {% if ultimo_campo %}
+                    <a href="{% url 'mapa:delimitar_terreno' pk=ultimo_campo.pk %}" class="welcome-card-btn">
+                        Buscar mi establecimiento &rarr;
+                    </a>
+                    {% else %}
+                    <a href="{% url 'campos:establecimiento_crear' %}?modo=mapa" class="welcome-card-btn">
+                        Buscar mi establecimiento &rarr;
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </article>
+    </div>
+
+    <!-- Si ya tiene establecimientos registrados, panel de acceso directo -->
+    {% if total_establecimientos > 0 %}
+    <div class="existing-farms-banner">
+        <div class="existing-farms-info">
+            <span style="font-size: 1.5rem;">🏡</span>
+            <div>
+                <strong>Tenés {{ total_establecimientos }} establecimiento{{ total_establecimientos|pluralize:"s" }} registrado{{ total_establecimientos|pluralize:"s" }}</strong>
+                <p style="font-size: 0.88rem; margin: 0;">Último predio activo: <em>{{ ultimo_campo.nombre }}</em> ({{ ultimo_campo.localidad }}, {{ ultimo_campo.departamento }})</p>
+            </div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">{# [Integración] flex-wrap: en celular los botones bajan de línea en vez de salirse #}
+            <a href="{% url 'campos:establecimiento_detalle' pk=ultimo_campo.pk %}" class="btn btn-secondary btn-sm">
+                Ver ficha de {{ ultimo_campo.nombre }}
+            </a>
+            {# [Integración] Acceso directo al diseño en el mapa (app mapa, parte de Agus) #}
+            <a href="{% url 'mapa:delimitar_terreno' pk=ultimo_campo.pk %}" class="btn btn-secondary btn-sm">
+                🌼 Diseñar en el mapa
+            </a>
+            <a href="{% url 'campos:establecimientos_lista' %}" class="btn btn-primary btn-sm">
+                Ver todos mis campos &rarr;
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
